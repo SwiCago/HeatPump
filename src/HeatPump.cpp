@@ -45,7 +45,7 @@ const String HeatPump::CONTROL_PACKET_VALUES_MAP[] = {"POWER", "MODE", "TEMP", "
 const int HeatPump::CONTROL_PACKET_POSITIONS[]        = {3,      4,     5,     6,    7,     10};
 const String HeatPump::CONTROL_PACKET_POSITIONS_MAP[] = {"POWER", "MODE", "TEMP", "FAN", "VANE", "DIR"};
 
-String HeatPump::currentSettings[] = {POWER_MAP[0], MODE_MAP[0], TEMP_MAP[0], FAN_MAP[0], VANE_MAP[0], DIR_MAP[0]};
+String HeatPump::currentSettings[] = {POWER_MAP[0], MODE_MAP[0], TEMP_MAP[0], FAN_MAP[0], VANE_MAP[0], DIR_MAP[0], ROOM_TEMP_MAP[0]};
 String HeatPump::wantedSettings[]  = {POWER_MAP[0], MODE_MAP[0], TEMP_MAP[0], FAN_MAP[0], VANE_MAP[0], DIR_MAP[0]};
 
 HardwareSerial * HeatPump::_HardSerial;
@@ -79,14 +79,93 @@ void HeatPump::update() {
   delay(1000);
 }
 
-void HeatPump::setSettings(String settings[]) {
-  for (int i = 0; i < 6; i++) {
-    HeatPump::wantedSettings[i] = settings[i];
-  }
-}
-
 void HeatPump::getSettings(String *settings) {
   settings = HeatPump::currentSettings;
+}
+
+void HeatPump::setSettings(String settings[]) {
+  HeatPump::setPowerSetting(settings[0]);
+  HeatPump::setModeSetting(settings[1]);
+  HeatPump::setTemperature(settings[2]);
+  HeatPump::setFanSpeed(settings[3]);
+  HeatPump::setVaneSetting(settings[4]);
+  HeatPump::setDirectionSetting(settings[5]);
+}
+
+boolean HeatPump::getPowerSettingBool() {
+  return HeatPump::currentSettings[0] == HeatPump::POWER_MAP[1] ? true : false;
+}
+void HeatPump::setPowerSetting(boolean setting) {
+  HeatPump::wantedSettings[0] = findValueByString(HeatPump::POWER_MAP, 2, HeatPump::POWER_MAP[setting ? 1 : 0]) > -1 ? HeatPump::POWER_MAP[setting ? 1 : 0] : HeatPump::POWER_MAP[0];
+}
+
+String HeatPump::getPowerSetting() {
+  return HeatPump::currentSettings[0];
+}
+
+void HeatPump::setPowerSetting(String setting) {
+  HeatPump::wantedSettings[0] = findValueByString(HeatPump::POWER_MAP, 2, setting) > -1 ? setting : HeatPump::POWER_MAP[0];
+}
+
+String HeatPump::getModeSetting() {
+  return HeatPump::currentSettings[1];
+}
+
+void HeatPump::setModeSetting(String setting) {
+  HeatPump::wantedSettings[1] = findValueByString(HeatPump::MODE_MAP, 5, setting) > -1 ? setting : HeatPump::MODE_MAP[0];
+}
+
+
+unsigned int HeatPump::getTemperatureAsInt() {
+  return atoi(HeatPump::currentSettings[2].c_str());
+}
+
+void HeatPump::setTemperature(unsigned int setting) {
+  char* c;
+  itoa(setting, c, 10);
+  String s = String(c);
+  HeatPump::wantedSettings[2] = findValueByString(HeatPump::TEMP_MAP, 16, s) > -1 ? s : HeatPump::TEMP_MAP[0];
+}
+
+
+String HeatPump::getTemperature() {
+  return HeatPump::currentSettings[2];
+}
+
+void HeatPump::setTemperature(String setting) {
+  HeatPump::wantedSettings[2] = findValueByString(HeatPump::TEMP_MAP, 16, setting) > -1 ? setting : HeatPump::TEMP_MAP[0];
+}
+
+String HeatPump::getFanSpeed() {
+  return HeatPump::currentSettings[3];
+}
+
+void HeatPump::setFanSpeed(String setting) {
+  HeatPump::wantedSettings[3] = findValueByString(HeatPump::FAN_MAP, 6, setting) > -1 ? setting : HeatPump::FAN_MAP[0];
+}
+
+String HeatPump::getVaneSetting() {
+  return HeatPump::currentSettings[4];
+}
+
+void HeatPump::setVaneSetting(String setting) {
+  HeatPump::wantedSettings[4] = findValueByString(HeatPump::VANE_MAP, 6, setting) > -1 ? setting : HeatPump::VANE_MAP[0];
+}
+
+String HeatPump::getDirectionSetting() {
+  return HeatPump::currentSettings[5];
+}
+
+void HeatPump::setDirectionSetting(String setting) {
+  HeatPump::wantedSettings[5] = findValueByString(HeatPump::DIR_MAP, 7, setting) > -1 ? setting : HeatPump::DIR_MAP[0];
+}
+
+unsigned int HeatPump::getRoomTemperatureAsInt() {
+  return atoi(HeatPump::currentSettings[6].c_str());
+}
+
+String HeatPump::getRoomTemperature() {
+  return HeatPump::currentSettings[6];
 }
 
 int HeatPump::findValueByByte(const byte values[], int len, byte value) {

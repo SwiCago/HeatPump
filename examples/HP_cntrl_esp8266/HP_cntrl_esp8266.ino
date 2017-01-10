@@ -92,7 +92,7 @@ void change_states() {
     hp.connect(&Serial);
   }
   else {
-    String currentSettings[6]  = {};
+    String currentSettings[7]  = {};
     hp.getSettings(currentSettings);
     boolean update = false;
     if (server.hasArg("POWER")) {
