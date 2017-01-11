@@ -14,7 +14,7 @@ Arduino library to control Mitsubishi Heat Pumps via connector cn105
 #Notes
 - Tested with ESP8266
 - Tested with Arduino Micro Pro
-- Tested with Mitsubishi HeatPump MSZFH(wall units) and SEZKD (ducted units)
+- Tested with Mitsubishi HeatPump MSZ-FH(wall units) and SEZ-KD (ducted units)
 
 # Demo Circuit
 <img src="https://github.com/SwiCago/HeatPump/blob/master/CN105_ESP8266.png"/>
