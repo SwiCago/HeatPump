@@ -23,6 +23,12 @@
 const byte HeatPump::CONNECT[] = {0xfc, 0x5a, 0x01, 0x30, 0x02, 0xca, 0x01, 0xa8};
 const byte HeatPump::HEADER[]  = {0xfc, 0x41, 0x01, 0x30, 0x10, 0x01, 0x9f, 0x00};
 const byte HeatPump::PAD[]     = {0x00, 0x00, 0x00, 0x00, 0x00};
+
+const byte HeatPump::SETTINGS_INFO_PACKET[]  = {0xfc, 0x42, 0x01, 0x30, 0x10, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
+												0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7b};
+const byte HeatPump::ROOMTEMP_INFO_PACKET[]  = {0xfc, 0x42, 0x01, 0x30, 0x10, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
+												0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7a};
+
 const byte HeatPump::POWER[]       = {0x00, 0x01};
 const String HeatPump::POWER_MAP[] = {"OFF", "ON"};
 const byte HeatPump::MODE[]       = {0x01,   0x02,  0x03, 0x07, 0x08};
@@ -49,7 +55,9 @@ String HeatPump::currentSettings[] = {POWER_MAP[0], MODE_MAP[0], TEMP_MAP[0], FA
 String HeatPump::wantedSettings[]  = {POWER_MAP[0], MODE_MAP[0], TEMP_MAP[0], FAN_MAP[0], VANE_MAP[0], DIR_MAP[0]};
 
 HardwareSerial * HeatPump::_HardSerial;
-
+unsigned long HeatPump::lastSendTime;
+byte HeatPump::infoPacketType;
+bool HeatPump::lastUpdateSuccessful;
 // Constructors ////////////////////////////////////////////////////////////////
 
 HeatPump::HeatPump() {}
@@ -59,6 +67,10 @@ HeatPump::HeatPump() {}
 void HeatPump::connect(HardwareSerial *serial) {
   _HardSerial = serial;
   _HardSerial->begin(2400, SERIAL_8E1);
+  
+  infoPacketType = 0;
+  lastUpdateSuccessful = false;
+  
   delay(2000);
   for (int i = 0; i < 8; i++) {
     _HardSerial->write((uint8_t)CONNECT[i]);
@@ -70,13 +82,24 @@ void HeatPump::connect(HardwareSerial *serial) {
   delay(2000);
 }
 
-void HeatPump::update() {
+bool HeatPump::update() {
   byte packet[22] = {};
   createPacket(packet, HeatPump::wantedSettings);
   for (int i = 0; i < 22; i++) {
     _HardSerial->write((uint8_t)packet[i]);
   }
+  lastUpdateSuccessful = false;
   delay(1000);
+  
+  checkForUpdate();
+  
+  if(lastUpdateSuccessful) {
+	  for(int i=0;i<6;i++) {
+		  HeatPump::currentSettings[i] = HeatPump::wantedSettings[i];
+	  }
+  }
+  
+  return lastUpdateSuccessful;
 }
 
 void HeatPump::getSettings(String *settings) {
@@ -149,7 +172,7 @@ String HeatPump::getVaneSetting() {
 }
 
 void HeatPump::setVaneSetting(String setting) {
-  HeatPump::wantedSettings[4] = findValueByString(HeatPump::VANE_MAP, 6, setting) > -1 ? setting : HeatPump::VANE_MAP[0];
+  HeatPump::wantedSettings[4] = findValueByString(HeatPump::VANE_MAP, 7, setting) > -1 ? setting : HeatPump::VANE_MAP[0];
 }
 
 String HeatPump::getDirectionSetting() {
@@ -185,6 +208,15 @@ int HeatPump::findValueByString(const String values[], int len, String value) {
   return -1;
 }
 
+String HeatPump::findStringValueFromByteValue(const String str_values[], const byte byte_values[], int len, byte value) {
+  for (int i = 0; i < len; i++) {
+    if (byte_values[i] == value) {
+      return str_values[i];
+    }
+  }
+  return "";
+}
+
 byte HeatPump::checkSum(byte bytes[], int len) {
   byte sum = 0;
   for (int i = 0; i < len; i++) {
@@ -214,4 +246,148 @@ void HeatPump::createPacket(byte *packet, String settings[]) {
     packet[i] = data[i];
   }
   packet[21] = chkSum;
+}
+
+void HeatPump::requestSettings() {
+	for (int i = 0; i < 22; i++) {
+		_HardSerial->write((uint8_t)SETTINGS_INFO_PACKET[i]);
+	}
+	delay(100);
+}
+
+void HeatPump::requestTemperature() {
+	for (int i = 0; i < 22; i++) {
+		_HardSerial->write((uint8_t)ROOMTEMP_INFO_PACKET[i]);
+	}
+	delay(100);
+}
+
+void HeatPump::requestInfoAlternate() {
+	unsigned long currentMillis = millis();
+	
+	if(currentMillis - lastSendTime > 5000 || ((currentMillis < lastSendTime) && currentMillis > 5000))
+	{
+		if(infoPacketType == 0) {
+			requestSettings();
+			
+			infoPacketType = 1;
+		}
+		else if(infoPacketType == 1) {
+			requestTemperature();
+			
+			infoPacketType = 0;
+		}
+		lastSendTime = millis();
+	}
+}
+
+int HeatPump::checkForUpdate() {
+  byte header[5] = {};
+  byte data[32] = {};
+  bool found_start = false;
+  int data_sum = 0;
+  byte checksum = 0;
+  byte data_len = 0;
+  int data_read = 0;
+  
+  if( _HardSerial->available() > 0)
+  {
+    // read until we get start byte 0xfc
+    while( _HardSerial->available() > 0 && !found_start)
+    {
+      header[0] =   _HardSerial->read();
+      if(header[0] == 0xFC) {
+        found_start = true;
+        Serial1.println("Data packet is available");
+        delay(100); // found that this delay increases accuracy when reading, might not be needed though
+      }
+    }
+
+    if(!found_start)
+    {
+      return -1;
+    }
+    
+    //read header
+    Serial1.println("Header: ");
+    for(int i=1;i<5;i++) {
+      header[i] =  _HardSerial->read();
+      Serial1.print(header[i], HEX);  Serial1.print(" ");
+      data_read++;
+    }
+    Serial1.println();
+    
+    //check header
+    if(header[0] == 0xFC && header[2] == 0x01 && header[3] == 0x30)
+    {
+      data_len = header[4];
+          
+      for(int i=0;i<data_len;i++) {
+        data[i] =  _HardSerial->read();
+        data_read++;
+      }
+  
+      // read checksum data
+      data[data_len] =  _HardSerial->read();
+  
+      Serial1.print("Got Data. Len: ");
+      Serial1.print(data_len);
+      Serial1.print(". Read ");
+      Serial1.println(data_read);
+  
+      for (int i = 0; i < 5; i++) {
+        Serial1.print(header[i], HEX);  Serial1.print(" ");
+        data_sum += header[i];
+      }
+      Serial1.print(" - ");
+      for (int i = 0; i < data_len; i++) {
+        Serial1.print(data[i], HEX);  Serial1.print(" ");
+        data_sum += data[i];
+      }
+      Serial1.println();
+  
+      checksum = (0xfc - data_sum) & 0xff;
+  
+      Serial1.print("Packet ChkSum: "); Serial1.print(checksum, HEX);
+      Serial1.print(" Calc ChkSum: "); Serial1.print(data[data_len], HEX);
+      Serial1.println();
+      
+      if(data[data_len] == checksum) {
+        Serial1.println("Chksum good");
+        if(data[0] == 0x02 && header[1] == 0x62)
+        {
+            Serial1.println("set packet");
+            //correct packet
+			currentSettings[0] = findStringValueFromByteValue(HeatPump::POWER_MAP, HeatPump::POWER, 2, data[3]);
+			currentSettings[1] = findStringValueFromByteValue(HeatPump::MODE_MAP, HeatPump::MODE, 5, data[4]);
+			currentSettings[2] = findStringValueFromByteValue(HeatPump::TEMP_MAP, HeatPump::TEMP, 16, data[5]);
+			currentSettings[3] = findStringValueFromByteValue(HeatPump::FAN_MAP, HeatPump::FAN, 6, data[6]);
+			currentSettings[4] = findStringValueFromByteValue(HeatPump::VANE_MAP, HeatPump::VANE, 7, data[7]);
+			currentSettings[5] = findStringValueFromByteValue(HeatPump::DIR_MAP, HeatPump::DIR, 7, data[7]);
+            
+            return 1;
+          
+        } 
+        else if(data[0] == 0x03 && header[1] == 0x62) {
+          Serial1.println("temp packet");
+          
+		  currentSettings[6] = findStringValueFromByteValue(HeatPump::ROOM_TEMP_MAP, HeatPump::ROOM_TEMP, 32, data[3]);
+          Serial1.println(currentSettings[6]);
+        }
+		else if(header[1] == 0x61)
+		{
+			Serial1.println("Last update was successful");
+			lastUpdateSuccessful = true;
+		}
+      }
+    }
+    else
+    {
+      Serial1.println("Bad data, ignoring");
+    }
+  }
+
+  header[0] = 0x00;
+  
+  return -1;
 }
