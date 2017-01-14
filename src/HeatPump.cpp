@@ -25,9 +25,9 @@ const byte HeatPump::HEADER[]  = {0xfc, 0x41, 0x01, 0x30, 0x10, 0x01, 0x9f, 0x00
 const byte HeatPump::PAD[]     = {0x00, 0x00, 0x00, 0x00, 0x00};
 
 const byte HeatPump::SETTINGS_INFO_PACKET[]  = {0xfc, 0x42, 0x01, 0x30, 0x10, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
-												0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7b};
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7b};
 const byte HeatPump::ROOMTEMP_INFO_PACKET[]  = {0xfc, 0x42, 0x01, 0x30, 0x10, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
-												0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7a};
+                                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7a};
 
 const byte HeatPump::POWER[]       = {0x00, 0x01};
 const String HeatPump::POWER_MAP[] = {"OFF", "ON"};
@@ -94,9 +94,9 @@ bool HeatPump::update() {
   checkForUpdate();
   
   if(lastUpdateSuccessful) {
-	  for(int i=0;i<6;i++) {
-		  HeatPump::currentSettings[i] = HeatPump::wantedSettings[i];
-	  }
+      for(int i=0;i<6;i++) {
+          HeatPump::currentSettings[i] = HeatPump::wantedSettings[i];
+      }
   }
   
   return lastUpdateSuccessful;
@@ -249,36 +249,36 @@ void HeatPump::createPacket(byte *packet, String settings[]) {
 }
 
 void HeatPump::requestSettings() {
-	for (int i = 0; i < 22; i++) {
-		_HardSerial->write((uint8_t)SETTINGS_INFO_PACKET[i]);
-	}
-	delay(100);
+    for (int i = 0; i < 22; i++) {
+        _HardSerial->write((uint8_t)SETTINGS_INFO_PACKET[i]);
+    }
+    delay(100);
 }
 
 void HeatPump::requestTemperature() {
-	for (int i = 0; i < 22; i++) {
-		_HardSerial->write((uint8_t)ROOMTEMP_INFO_PACKET[i]);
-	}
-	delay(100);
+    for (int i = 0; i < 22; i++) {
+        _HardSerial->write((uint8_t)ROOMTEMP_INFO_PACKET[i]);
+    }
+    delay(100);
 }
 
 void HeatPump::requestInfoAlternate() {
-	unsigned long currentMillis = millis();
-	
-	if(currentMillis - lastSendTime > 5000 || ((currentMillis < lastSendTime) && currentMillis > 5000))
-	{
-		if(infoPacketType == 0) {
-			requestSettings();
-			
-			infoPacketType = 1;
-		}
-		else if(infoPacketType == 1) {
-			requestTemperature();
-			
-			infoPacketType = 0;
-		}
-		lastSendTime = millis();
-	}
+    unsigned long currentMillis = millis();
+    
+    if(currentMillis - lastSendTime > 5000 || ((currentMillis < lastSendTime) && currentMillis > 5000))
+    {
+        if(infoPacketType == 0) {
+            requestSettings();
+            
+            infoPacketType = 1;
+        }
+        else if(infoPacketType == 1) {
+            requestTemperature();
+            
+            infoPacketType = 0;
+        }
+        lastSendTime = millis();
+    }
 }
 
 int HeatPump::checkForUpdate() {
@@ -358,12 +358,12 @@ int HeatPump::checkForUpdate() {
         {
             Serial1.println("set packet");
             //correct packet
-			currentSettings[0] = findStringValueFromByteValue(HeatPump::POWER_MAP, HeatPump::POWER, 2, data[3]);
-			currentSettings[1] = findStringValueFromByteValue(HeatPump::MODE_MAP, HeatPump::MODE, 5, data[4]);
-			currentSettings[2] = findStringValueFromByteValue(HeatPump::TEMP_MAP, HeatPump::TEMP, 16, data[5]);
-			currentSettings[3] = findStringValueFromByteValue(HeatPump::FAN_MAP, HeatPump::FAN, 6, data[6]);
-			currentSettings[4] = findStringValueFromByteValue(HeatPump::VANE_MAP, HeatPump::VANE, 7, data[7]);
-			currentSettings[5] = findStringValueFromByteValue(HeatPump::DIR_MAP, HeatPump::DIR, 7, data[7]);
+            currentSettings[0] = findStringValueFromByteValue(HeatPump::POWER_MAP, HeatPump::POWER, 2, data[3]);
+            currentSettings[1] = findStringValueFromByteValue(HeatPump::MODE_MAP, HeatPump::MODE, 5, data[4]);
+            currentSettings[2] = findStringValueFromByteValue(HeatPump::TEMP_MAP, HeatPump::TEMP, 16, data[5]);
+            currentSettings[3] = findStringValueFromByteValue(HeatPump::FAN_MAP, HeatPump::FAN, 6, data[6]);
+            currentSettings[4] = findStringValueFromByteValue(HeatPump::VANE_MAP, HeatPump::VANE, 7, data[7]);
+            currentSettings[5] = findStringValueFromByteValue(HeatPump::DIR_MAP, HeatPump::DIR, 7, data[7]);
             
             return 1;
           
@@ -371,14 +371,14 @@ int HeatPump::checkForUpdate() {
         else if(data[0] == 0x03 && header[1] == 0x62) {
           Serial1.println("temp packet");
           
-		  currentSettings[6] = findStringValueFromByteValue(HeatPump::ROOM_TEMP_MAP, HeatPump::ROOM_TEMP, 32, data[3]);
+          currentSettings[6] = findStringValueFromByteValue(HeatPump::ROOM_TEMP_MAP, HeatPump::ROOM_TEMP, 32, data[3]);
           Serial1.println(currentSettings[6]);
         }
-		else if(header[1] == 0x61)
-		{
-			Serial1.println("Last update was successful");
-			lastUpdateSuccessful = true;
-		}
+        else if(header[1] == 0x61)
+        {
+            Serial1.println("Last update was successful");
+            lastUpdateSuccessful = true;
+        }
       }
     }
     else

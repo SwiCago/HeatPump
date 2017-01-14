@@ -32,9 +32,9 @@ class HeatPump
   private:
     static const byte CONNECT[];
     static const byte HEADER[];
-	static const byte SETTINGS_INFO_PACKET[];
-	static const byte ROOMTEMP_INFO_PACKET[];
-	
+    static const byte SETTINGS_INFO_PACKET[];
+    static const byte ROOMTEMP_INFO_PACKET[];
+    
     static const byte PAD[];
     static const byte POWER[];
     static const byte MODE[];
@@ -57,10 +57,10 @@ class HeatPump
     static byte checkSum(byte bytes[], int len);
 
     static HardwareSerial * _HardSerial;
-	
-	static unsigned long lastSendTime;
-	static byte infoPacketType;
-	static bool lastUpdateSuccessful;
+    
+    static unsigned long lastSendTime;
+    static byte infoPacketType;
+    static bool lastUpdateSuccessful;
 
   public:
     static const String POWER_MAP[];
@@ -93,9 +93,9 @@ class HeatPump
     void setDirectionSetting(String setting);
     unsigned int getRoomTemperatureAsInt();
     String getRoomTemperature();
-	int checkForUpdate();
-	String findStringValueFromByteValue(const String str_values[], const byte byte_values[], int len, byte value);
-	void requestInfoAlternate();
-	void requestSettings();
-	void requestTemperature();
+    int checkForUpdate();
+    String findStringValueFromByteValue(const String str_values[], const byte byte_values[], int len, byte value);
+    void requestInfoAlternate();
+    void requestSettings();
+    void requestTemperature();
 };

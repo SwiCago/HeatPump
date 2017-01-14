@@ -33,7 +33,6 @@ hp.connect(&Serial);
 
 hp.requestSettings();
 delay(1000);
-hp.checkForUpdates();
 hp.requestTemperature();
 delay(1000);
 hp.checkForUpdates();
