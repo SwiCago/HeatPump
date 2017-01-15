@@ -18,6 +18,7 @@
 */
 #include <stdint.h>
 #include <WString.h>
+#include <math.h>
 #include <HardwareSerial.h>
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
@@ -86,4 +87,6 @@ class HeatPump
     void setDirectionSetting(String setting);
     unsigned int getRoomTemperatureAsInt();
     String getRoomTemperature();
+    unsigned int FahrenheitToCelius(unsigned int tempF);
+    unsigned int CeliusToFahrenheit(unsigned int tempC);
 };

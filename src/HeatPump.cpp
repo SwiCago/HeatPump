@@ -168,6 +168,16 @@ String HeatPump::getRoomTemperature() {
   return HeatPump::currentSettings[6];
 }
 
+unsigned int HeatPump::FahrenheitToCelius(unsigned int tempF) {
+  double temp = (tempF - 32) / 1.8;                //round up if heat, down if cool or any other mode
+  return HeatPump::currentSettings[2] == HeatPump::MODE_MAP[0] ? ceil(temp) : floor(temp);
+}
+
+unsigned int HeatPump::CeliusToFahrenheit(unsigned int tempC) {
+  double temp = (tempC * 1.8) + 32;                //round up if heat, down if cool or any other mode
+  return HeatPump::currentSettings[2] == HeatPump::MODE_MAP[0] ? ceil(temp) : floor(temp);
+}
+
 int HeatPump::findValueByByte(const byte values[], int len, byte value) {
   for (int i = 0; i < len; i++) {
     if (values[i] == value) {
