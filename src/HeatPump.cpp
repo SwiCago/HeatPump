@@ -214,7 +214,7 @@ String HeatPump::findStringValueFromByteValue(const String str_values[], const b
       return str_values[i];
     }
   }
-  return "";
+  return str_values[0];
 }
 
 byte HeatPump::checkSum(byte bytes[], int len) {
@@ -262,10 +262,11 @@ void HeatPump::requestTemperature() {
     delay(100);
 }
 
+/* alternates requesting of settings/temperature information every 2.5 seconds, useful to keep the currentSettings updated */
 void HeatPump::requestInfoAlternate() {
     unsigned long currentMillis = millis();
     
-    if(currentMillis - lastSendTime > 5000 || ((currentMillis < lastSendTime) && currentMillis > 5000))
+    if(currentMillis - lastSendTime > 2500 || ((currentMillis < lastSendTime) && currentMillis > 2500))
     {
         if(infoPacketType == 0) {
             requestSettings();
@@ -288,17 +289,15 @@ int HeatPump::checkForUpdate() {
   int data_sum = 0;
   byte checksum = 0;
   byte data_len = 0;
-  int data_read = 0;
   
   if( _HardSerial->available() > 0)
   {
     // read until we get start byte 0xfc
     while( _HardSerial->available() > 0 && !found_start)
     {
-      header[0] =   _HardSerial->read();
+      header[0] =  _HardSerial->read();
       if(header[0] == 0xFC) {
         found_start = true;
-        Serial1.println("Data packet is available");
         delay(100); // found that this delay increases accuracy when reading, might not be needed though
       }
     }
@@ -309,81 +308,57 @@ int HeatPump::checkForUpdate() {
     }
     
     //read header
-    Serial1.println("Header: ");
     for(int i=1;i<5;i++) {
       header[i] =  _HardSerial->read();
-      Serial1.print(header[i], HEX);  Serial1.print(" ");
-      data_read++;
     }
-    Serial1.println();
     
     //check header
     if(header[0] == 0xFC && header[2] == 0x01 && header[3] == 0x30)
     {
       data_len = header[4];
-          
+      
       for(int i=0;i<data_len;i++) {
         data[i] =  _HardSerial->read();
-        data_read++;
       }
   
-      // read checksum data
+      // read checksum byte
       data[data_len] =  _HardSerial->read();
   
-      Serial1.print("Got Data. Len: ");
-      Serial1.print(data_len);
-      Serial1.print(". Read ");
-      Serial1.println(data_read);
-  
       for (int i = 0; i < 5; i++) {
-        Serial1.print(header[i], HEX);  Serial1.print(" ");
         data_sum += header[i];
       }
-      Serial1.print(" - ");
       for (int i = 0; i < data_len; i++) {
-        Serial1.print(data[i], HEX);  Serial1.print(" ");
         data_sum += data[i];
       }
-      Serial1.println();
   
       checksum = (0xfc - data_sum) & 0xff;
-  
-      Serial1.print("Packet ChkSum: "); Serial1.print(checksum, HEX);
-      Serial1.print(" Calc ChkSum: "); Serial1.print(data[data_len], HEX);
-      Serial1.println();
       
       if(data[data_len] == checksum) {
-        Serial1.println("Chksum good");
-        if(data[0] == 0x02 && header[1] == 0x62)
+        if(data[0] == 0x02 && header[1] == 0x62)  //settings information
         {
-            Serial1.println("set packet");
-            //correct packet
+            
             currentSettings[0] = findStringValueFromByteValue(HeatPump::POWER_MAP, HeatPump::POWER, 2, data[3]);
             currentSettings[1] = findStringValueFromByteValue(HeatPump::MODE_MAP, HeatPump::MODE, 5, data[4]);
             currentSettings[2] = findStringValueFromByteValue(HeatPump::TEMP_MAP, HeatPump::TEMP, 16, data[5]);
             currentSettings[3] = findStringValueFromByteValue(HeatPump::FAN_MAP, HeatPump::FAN, 6, data[6]);
             currentSettings[4] = findStringValueFromByteValue(HeatPump::VANE_MAP, HeatPump::VANE, 7, data[7]);
-            currentSettings[5] = findStringValueFromByteValue(HeatPump::DIR_MAP, HeatPump::DIR, 7, data[7]);
+            currentSettings[5] = findStringValueFromByteValue(HeatPump::DIR_MAP, HeatPump::DIR, 7, data[10]);
             
             return 1;
           
         } 
-        else if(data[0] == 0x03 && header[1] == 0x62) {
-          Serial1.println("temp packet");
-          
+        else if(data[0] == 0x03 && header[1] == 0x62) //Room temperature reading         
+        {   
           currentSettings[6] = findStringValueFromByteValue(HeatPump::ROOM_TEMP_MAP, HeatPump::ROOM_TEMP, 32, data[3]);
-          Serial1.println(currentSettings[6]);
+          return 2;
         }
         else if(header[1] == 0x61)
         {
-            Serial1.println("Last update was successful");
+            //Last update was successful
             lastUpdateSuccessful = true;
+            return 3;
         }
       }
-    }
-    else
-    {
-      Serial1.println("Bad data, ignoring");
     }
   }
 
