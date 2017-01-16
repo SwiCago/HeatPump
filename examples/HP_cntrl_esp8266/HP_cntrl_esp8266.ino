@@ -8,7 +8,7 @@ const char* ssid = "esp8266";
 
 const char* html = "<html>\n<head>\n<meta name='viewport' content='width=device-width, initial-scale=2'/>\n"
                    "<style></style>\n"
-                   "<body><h3>Heat Pump Demo</h3>\n<form>\n<table>\n"
+                   "<body><h3>Heat Pump Demo</h3>TEMP: _ROOMTEMP_\n<form>\n<table>\n"
                    "<tr>\n<td>Power:</td>\n<td>\n_POWER_</td>\n</tr>\n"
                    "<tr>\n<td>Mode:</td>\n<td>\n_MODE_</td>\n</tr>\n"
                    "<tr>\n<td>Temp:</td>\n<td>\n_TEMP_</td>\n</tr>"
@@ -45,6 +45,7 @@ void setup() {
 void loop() {
   dnsServer.processNextRequest();
   server.handleClient();
+  hp.sync();
 }
 
 String encodeString(String toEncode) {
@@ -83,6 +84,7 @@ void handle_root() {
   toSend.replace("_FAN_", createOptionSelector("FAN", hp.FAN_MAP, 6, wantedSettings[3]));
   toSend.replace("_VANE_", createOptionSelector("VANE", hp.VANE_MAP, 7, wantedSettings[4]));
   toSend.replace("_DIR_", createOptionSelector("DIR", hp.DIR_MAP, 7, wantedSettings[5]));
+  toSend.replace("_ROOMTEMP_", hp.getRoomTemperature() + "°C");
   server.send(200, "text/html", toSend);
   delay(100);
 }
@@ -92,36 +94,38 @@ void change_states() {
     hp.connect(&Serial);
   }
   else {
-    String currentSettings[7]  = {};
-    hp.getSettings(currentSettings);
     boolean update = false;
     if (server.hasArg("POWER")) {
       wantedSettings[0] = hp.POWER_MAP[server.arg("POWER").toInt()];
-      update = currentSettings[0] != wantedSettings[0] ? true : update;
+      hp.setPowerSetting(wantedSettings[0]);
+      update = true;
     }
     if (server.hasArg("MODE")) {
-      wantedSettings[1] =  hp.MODE_MAP[server.arg("MODE").toInt()];
-      update = currentSettings[1] != wantedSettings[1] ? true : update;
+      wantedSettings[1] = hp.MODE_MAP[server.arg("MODE").toInt()];
+      hp.setModeSetting(wantedSettings[1]);
+      update = true;
     }
     if (server.hasArg("TEMP")) {
       wantedSettings[2] = hp.TEMP_MAP[server.arg("TEMP").toInt()];
-      update = currentSettings[2] != wantedSettings[2] ? true : update;
+      hp.setTemperature(wantedSettings[2]);
+      update = true;
     }
     if (server.hasArg("FAN")) {
       wantedSettings[3] = hp.FAN_MAP[server.arg("FAN").toInt()];
-      update = currentSettings[3] != wantedSettings[3] ? true : update;
+      hp.setFanSpeed(wantedSettings[3]);
+      update = true;
     }
     if (server.hasArg("VANE")) {
       wantedSettings[4] = hp.VANE_MAP[server.arg("VANE").toInt()];
-      update = currentSettings[4] != wantedSettings[4] ? true : update;
+      hp.setVaneSetting(wantedSettings[4]);
+      update = true;
     }
     if (server.hasArg("DIR")) {
       wantedSettings[5] = hp.DIR_MAP[server.arg("DIR").toInt()];
-      update = currentSettings[5] != wantedSettings[5] ? true : update;
+      hp.setDirectionSetting(wantedSettings[5]);
+      update = true;
     }
-    if (update) {
-      hp.setSettings(wantedSettings);
-      hp.update();
-    }
+    if(update) {
+      hp.update(); }
   }
 }
