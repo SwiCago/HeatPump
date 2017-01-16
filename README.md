@@ -35,3 +35,6 @@ Arduino library to control Mitsubishi Heat Pumps via connector cn105
 Special thanks to Hadley in New Zealand 
   - His blog post, describing baud rate and details of cn105, Raspberry Pi Python code
   - https://nicegear.co.nz/blog/hacking-a-mitsubishi-heat-pump-air-conditioner/
+
+# GNU Lesser General Public License
+https://www.gnu.org/licenses/lgpl.html
