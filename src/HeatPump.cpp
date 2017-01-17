@@ -146,7 +146,7 @@ String HeatPump::getVaneSetting() {
 }
 
 void HeatPump::setVaneSetting(String setting) {
-  wantedSettings[4] = findValueByString(VANE_MAP, 6, setting) > -1 ? setting : VANE_MAP[0];
+  wantedSettings[4] = findValueByString(VANE_MAP, 7, setting) > -1 ? setting : VANE_MAP[0];
 }
 
 String HeatPump::getDirectionSetting() {
