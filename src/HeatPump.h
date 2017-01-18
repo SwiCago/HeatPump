@@ -16,6 +16,8 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+#ifndef __HeatPump_H__
+#define __HeatPump_H__
 #include <stdint.h>
 #include <WString.h>
 #include <math.h>
@@ -96,3 +98,4 @@ class HeatPump
     unsigned int FahrenheitToCelius(unsigned int tempF);
     unsigned int CeliusToFahrenheit(unsigned int tempC);
 };
+#endif
