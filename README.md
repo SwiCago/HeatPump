@@ -10,14 +10,16 @@ Quick start
 ```c++
 HeatPump hp;
 hp.connect(&Serial);
-String settings[6]={
+
+heatpumpSettings settings = {
     "ON",  /* ON/OFF */
 	"FAN", /* HEAT/COOL/FAN/DRY/AUTO */
 	"26",  /* Between 16 and 31 */
-	"4",   /* Fan speed 1-4, AUTO, or SILENT */
-	"3",   /* Air direction 1-5, SWING, or AUTO */
-	"|"    /* Direction <<, <, |, >, >> */
-}; //
+	"4",   /* Fan speed: 1-4, AUTO, or QUIET */
+	"3",   /* Air direction (vertical): 1-5, SWING, or AUTO */
+	"|"    /* Air direction (horizontal): <<, <, |, >, >>, <>, or SWING */
+}; 
+
 hp.setSettings(settings);
 hp.update();
 ```
@@ -27,7 +29,7 @@ hp.update();
 #### Getting updates from the heat pump
 
 ```c++
-String settings[7]={}
+heatpumpSettings settings[
 HeatPump hp;
 hp.connect(&Serial);
 
@@ -35,14 +37,14 @@ hp.requestSettings();
 delay(1000);
 hp.requestTemperature();
 delay(1000);
-hp.checkForUpdates();
+hp.checkForUpdate();
 
-hp.getSettings(settings);
+settings = hp.getSettings();
 /* settings now contains updated settings from heatpump, and room temperature in settings[6] */
 
 /* you can also put this in your loop() function to automatically keep the settings/temperature updated: */
 
-hp.checkForUpdates();
+hp.checkForUpdate();
 hp.requestInfoAlternate();
 
 ```
