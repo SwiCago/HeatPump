@@ -27,11 +27,26 @@
 
 typedef uint8_t byte;
 
+struct heatpumpSettings {
+  String power;
+  String mode;
+  int temperature;
+  String fan;
+  String vane; //vertical vane, up/down
+  String wideVane; //horizontal vane, left/right
+  int roomTemperature; //TODO: this isn't a "setting" as such, shouldn't be in struct. Not compared in comparison operators below
+};
+
+bool operator==(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
+bool operator!=(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
+
 class HeatPump
 {
   private:
     static const byte CONNECT[];
+    static const int CONNECT_LEN;
     static const byte HEADER[];
+    static const int HEADER_LEN;
     static const byte SETTINGS_INFO_PACKET[];
     static const byte ROOMTEMP_INFO_PACKET[];
     
@@ -41,19 +56,19 @@ class HeatPump
     static const byte TEMP[];
     static const byte FAN[];
     static const byte VANE[];
-    static const byte DIR[];
+    static const byte WIDEVANE[];
     static const byte ROOM_TEMP[];
     static const byte CONTROL_PACKET_VALUES[];
     static const String CONTROL_PACKET_VALUES_MAP[];
     static const int CONTROL_PACKET_POSITIONS[];
     static const String CONTROL_PACKET_POSITIONS_MAP[];
 
-    static String currentSettings[];
-    static String wantedSettings[];
+    static heatpumpSettings currentSettings;
+    static heatpumpSettings wantedSettings;
 
-    static void createPacket(byte *packet, String settings[]);
-    static int findValueByByte(const byte values[], int len, byte value);
-    static int findValueByString(const String values[], int len, String value);
+    static void createPacket(byte *packet, heatpumpSettings settings);
+    static int lookupByteMapIndex(const String valuesMap[], int len, String lookupValue);
+    static int lookupByteMapIndex(const int valuesMap[], int len, int lookupValue);
     static byte checkSum(byte bytes[], int len);
 
     static HardwareSerial * _HardSerial;
@@ -65,36 +80,34 @@ class HeatPump
   public:
     static const String POWER_MAP[];
     static const String MODE_MAP[];
-    static const String TEMP_MAP[];
+    static const int TEMP_MAP[];
     static const String FAN_MAP[];
     static const String VANE_MAP[];
-    static const String DIR_MAP[];
-    static const String ROOM_TEMP_MAP[];
+    static const String WIDEVANE_MAP[];
+    static const int ROOM_TEMP_MAP[];
     HeatPump();
     void connect(HardwareSerial *serial);
     bool update();
-    void getSettings(String *settings);
-    void setSettings(String settings[]);
+    heatpumpSettings getSettings();
+    void setSettings(heatpumpSettings settings);
     void setPowerSetting(boolean setting);
     boolean getPowerSettingBool(); 
     String getPowerSetting();
     void setPowerSetting(String setting);
     String getModeSetting();
     void setModeSetting(String setting);
-    unsigned int getTemperatureAsInt();
-    void setTemperature(unsigned int setting);
-    String getTemperature();
-    void setTemperature(String setting);
+    int getTemperature();
+    void setTemperature(int setting);
     String getFanSpeed();
     void setFanSpeed(String setting);
     String getVaneSetting();
     void setVaneSetting(String setting);
-    String getDirectionSetting();
-    void setDirectionSetting(String setting);
-    unsigned int getRoomTemperatureAsInt();
-    String getRoomTemperature();
+    String getWideVaneSetting();
+    void setWideVaneSetting(String setting);
+    int getRoomTemperature();
     int checkForUpdate();
-    String findStringValueFromByteValue(const String str_values[], const byte byte_values[], int len, byte value);
+    String lookupByteMapValue(const String valuesMap[], const byte byteMap[], int len, byte byteValue);
+    int lookupByteMapValue(const int valuesMap[], const byte byteMap[], int len, byte byteValue);
     void requestInfoAlternate();
     void requestSettings();
     void requestTemperature();
