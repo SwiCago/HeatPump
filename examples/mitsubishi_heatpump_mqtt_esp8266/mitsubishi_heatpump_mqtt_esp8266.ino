@@ -144,46 +144,46 @@ void loop() {
     reconnect();
   }
 
-  int result = hp.checkForUpdate();
-  hp.requestInfoAlternate();
+  hp.sync();
 
-  if(result > 0) {
-    heatpumpSettings currentSettings = hp.getSettings();
-    
+  heatpumpSettings currentSettings = hp.getSettings();
+
+  if(lastSettings != currentSettings) { // only publish the settings if they have changed since last time    
     const size_t bufferSize = JSON_OBJECT_SIZE(6);
     DynamicJsonBuffer jsonBuffer(bufferSize);
     
     JsonObject& root = jsonBuffer.createObject();
+  
+    root["power"]       = currentSettings.power;
+    root["mode"]        = currentSettings.mode;
+    root["temperature"] = currentSettings.temperature;
+    root["fan"]         = currentSettings.fan;
+    root["vane"]        = currentSettings.vane;
+    root["wideVane"]    = currentSettings.wideVane;
+
+    char buffer[512];
+    root.printTo(buffer, sizeof(buffer));
+
+    bool retain = true;
+    mqtt_client.publish(heatpump_topic, buffer, retain);
+
+    lastSettings = currentSettings;
+  } 
+  
+  if(millis() > (last_temp_send + 60000)) { // only send the temperature every 60s
+    const size_t bufferSize = JSON_OBJECT_SIZE(1);
+    DynamicJsonBuffer jsonBuffer(bufferSize);
     
-    if(result == 1 && lastSettings != currentSettings) { // only publish the settings if they have changed since last time
-      root["power"]       = currentSettings.power;
-      root["mode"]        = currentSettings.mode;
-      root["temperature"] = currentSettings.temperature;
-      root["fan"]         = currentSettings.fan;
-      root["vane"]        = currentSettings.vane;
-      root["wideVane"]    = currentSettings.wideVane;
+    JsonObject& root = jsonBuffer.createObject();
+  
+    root["roomTemperature"] = currentSettings.roomTemperature;
 
-      char buffer[512];
-      root.printTo(buffer, sizeof(buffer));
+    char buffer[512];
+    root.printTo(buffer, sizeof(buffer));
 
-      bool retain = true;
-      mqtt_client.publish(heatpump_topic, buffer, retain);
+    mqtt_client.publish(heatpump_temperature_topic, buffer);
 
-      lastSettings = currentSettings;
-    } else if(result == 2) {
-      if(millis() > (last_temp_send + 60000)) { // only send the temperature every 60s
-        root["roomTemperature"] = currentSettings.roomTemperature;
-
-        char buffer[512];
-        root.printTo(buffer, sizeof(buffer));
-    
-        mqtt_client.publish(heatpump_temperature_topic, buffer);
-
-        last_temp_send = millis();
-      }
-    } else if(result == 3) {
-      root["lastUpdate"] = true;
-    }
+    last_temp_send = millis();
   }
 
   mqtt_client.loop();

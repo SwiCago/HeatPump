@@ -21,6 +21,9 @@ heatpumpSettings settings = {
 }; 
 
 hp.setSettings(settings);
+// OR individual settings
+// hp.setModeSetting("COOL");
+
 hp.update();
 ```
 
@@ -29,23 +32,18 @@ hp.update();
 #### Getting updates from the heat pump
 
 ```c++
-heatpumpSettings settings[
-HeatPump hp;
-hp.connect(&Serial);
+void setup() {
+  heatpumpSettings settings[
+  HeatPump hp;
+  hp.connect(&Serial);
+}
 
-hp.requestSettings();
-delay(1000);
-hp.requestTemperature();
-delay(1000);
-hp.checkForUpdate();
+void loop() {
+  hp.sync();
 
-settings = hp.getSettings();
-/* settings now contains updated settings from heatpump, and room temperature in settings[6] */
-
-/* you can also put this in your loop() function to automatically keep the settings/temperature updated: */
-
-hp.checkForUpdate();
-hp.requestInfoAlternate();
+  /* get settings from heatpump, including room temperature in settings.roomTemperature */
+  settings = hp.getSettings();
+}
 
 ```
 
@@ -87,3 +85,6 @@ Demo Circuit
 Special thanks to Hadley in New Zealand 
   - His blog post, describing baud rate and details of cn105, Raspberry Pi Python code
   - https://nicegear.co.nz/blog/hacking-a-mitsubishi-heat-pump-air-conditioner/
+
+# GNU Lesser General Public License
+https://www.gnu.org/licenses/lgpl.html
