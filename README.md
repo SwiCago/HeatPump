@@ -1,22 +1,72 @@
-# HeatPump
+HeatPump
+----------
 Arduino library to control Mitsubishi Heat Pumps via connector cn105
 
-# Contents
+Quick start
+-----------
+
+#### Controlling the heat pump
+
+```c++
+HeatPump hp;
+hp.connect(&Serial);
+
+heatpumpSettings settings = {
+    "ON",  /* ON/OFF */
+	"FAN", /* HEAT/COOL/FAN/DRY/AUTO */
+	"26",  /* Between 16 and 31 */
+	"4",   /* Fan speed: 1-4, AUTO, or QUIET */
+	"3",   /* Air direction (vertical): 1-5, SWING, or AUTO */
+	"|"    /* Air direction (horizontal): <<, <, |, >, >>, <>, or SWING */
+}; 
+
+hp.setSettings(settings);
+// OR individual settings
+// hp.setModeSetting("COOL");
+
+hp.update();
+```
+
+[See heatPump_test.ino](examples/heatPump_test/heatPump_test.ino)
+
+#### Getting updates from the heat pump
+
+```c++
+void setup() {
+  heatpumpSettings settings[
+  HeatPump hp;
+  hp.connect(&Serial);
+}
+
+void loop() {
+  hp.sync();
+
+  /* get settings from heatpump, including room temperature in settings.roomTemperature */
+  settings = hp.getSettings();
+}
+
+```
+
+Contents
+--------
 - sources
 - sample usage code
 - Demo circuit using ESP-01
 
-# Installation
+Installation
+------------
 - PULL or download zip.
 - Move contents into Arduino library directory
 - Restart IDE, samples should be avaliable
 
-#Notes
+Notes
+-----
 - Tested with ESP8266
 - Tested with Arduino Micro Pro
-- Tested with Mitsubishi HeatPump MSZ-FH(wall units) and SEZ-KD (ducted units)
+- Tested with Mitsubishi HeatPump MSZ-FH/GE(wall units) and SEZ-KD (ducted units)
 
-# Demo Circuit
+Demo Circuit
+------------
 <img src="https://github.com/SwiCago/HeatPump/blob/master/CN105_ESP8266.png"/>
 
 # Parts required to make a CN105 female connector
