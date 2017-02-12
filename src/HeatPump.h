@@ -28,6 +28,19 @@
 #include "WProgram.h"
 #endif
 
+/* 
+ * Callback function definitions. Code differs for the ESP8266 platform, which requires the functional library.
+ * Based on callback implementation in the Arduino Client for MQTT library (https://github.com/knolleary/pubsubclient)
+ */
+#ifdef ESP8266
+#include <functional>
+#define SETTINGS_CHANGED_CALLBACK_SIGNATURE std::function<void()> settingsChangedCallback
+#define PACKET_RECEIVED_CALLBACK_SIGNATURE std::function<void(byte* data, unsigned int length)> packetReceivedCallback
+#else
+#define SETTINGS_CHANGED_CALLBACK_SIGNATURE void (*settingsChangedCallback)();
+#define PACKET_RECEIVED_CALLBACK_SIGNATURE void (*packetReceivedCallback)(byte* data, unsigned int length);
+#endif
+
 typedef uint8_t byte;
 
 struct heatpumpSettings {
@@ -91,8 +104,11 @@ class HeatPump
     void createInfoPacket(byte *packet);
     int getData();
 
+    // callbacks
+    SETTINGS_CHANGED_CALLBACK_SIGNATURE;
+    PACKET_RECEIVED_CALLBACK_SIGNATURE;
+
   public:
-                          
     HeatPump();
     void connect(HardwareSerial *serial);
     bool update();
@@ -116,5 +132,8 @@ class HeatPump
     int getRoomTemperature();
     unsigned int FahrenheitToCelsius(unsigned int tempF);
     unsigned int CelsiusToFahrenheit(unsigned int tempC);
+
+    void setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE);
+    void setPacketReceivedCallback(PACKET_RECEIVED_CALLBACK_SIGNATURE);
 };
 #endif
