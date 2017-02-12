@@ -54,7 +54,6 @@ HeatPump::HeatPump() {
   // changed going forward (e.g. setVaneSetting()), the other settings won't
   // revert to any default wanted settings, but remain as they currently are
   wantedSettings = currentSettings;
- 
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -72,15 +71,6 @@ void HeatPump::connect(HardwareSerial *serial) {
     }
     delay(1100);
   }
-
-  // need to do an checkForUpdate() here, to populate currentSettings and 
-  // wantedSettings. Otherwise race conditions can occur if update() is 
-  // called before the current heatpump settings are known.
-  // TODO: could this be rolled into one call? would sketches that use the 
-  // library benefit from a HeatPump:loop() that is called from their loop() to 
-  // keep things always current?
-  //HeatPump::requestSettings();
-  //HeatPump::checkForUpdate();
 }
 
 bool HeatPump::update() {
@@ -199,6 +189,14 @@ unsigned int HeatPump::FahrenheitToCelsius(unsigned int tempF) {
 unsigned int HeatPump::CelsiusToFahrenheit(unsigned int tempC) {
   double temp = (tempC * 1.8) + 32;                //round up if heat, down if cool or any other mode
   return currentSettings.mode == MODE_MAP[0] ? ceil(temp) : floor(temp);
+}
+
+void HeatPump::setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE) {
+  this->settingsChangedCallback = settingsChangedCallback;
+}
+
+void HeatPump::setPacketReceivedCallback(PACKET_RECEIVED_CALLBACK_SIGNATURE) {
+  this->packetReceivedCallback = packetReceivedCallback;
 }
 
 // Private Methods //////////////////////////////////////////////////////////////
@@ -344,15 +342,27 @@ int HeatPump::getData() {
       checksum = (0xfc - data_sum) & 0xff;
       
       if(data[data_len] == checksum) {
+        if(packetReceivedCallback) {
+          packetReceivedCallback(data, data_len);
+        }
+
         if(header[1] == 0x62 && data[0] == 0x02)  //settings information
         {
-          currentSettings.power       = lookupByteMapValue(POWER_MAP, POWER, 2, data[3]);
-          currentSettings.mode        = lookupByteMapValue(MODE_MAP, MODE, 5, data[4]);
-          currentSettings.temperature = lookupByteMapValue(TEMP_MAP, TEMP, 16, data[5]);
-          currentSettings.fan         = lookupByteMapValue(FAN_MAP, FAN, 6, data[6]);
-          currentSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
-          currentSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);
-            
+          heatpumpSettings receivedSettings;
+          receivedSettings.power       = lookupByteMapValue(POWER_MAP, POWER, 2, data[3]);
+          receivedSettings.mode        = lookupByteMapValue(MODE_MAP, MODE, 5, data[4]);
+          receivedSettings.temperature = lookupByteMapValue(TEMP_MAP, TEMP, 16, data[5]);
+          receivedSettings.fan         = lookupByteMapValue(FAN_MAP, FAN, 6, data[6]);
+          receivedSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
+          receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);
+
+          if(settingsChangedCallback && receivedSettings != currentSettings) {
+            currentSettings = receivedSettings;
+            settingsChangedCallback();
+          } else {
+            currentSettings = receivedSettings;
+          }
+
           return 1;
         } 
         else if(header[1] == 0x62 && data[0] == 0x03) //Room temperature reading         
