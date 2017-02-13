@@ -113,12 +113,12 @@ heatpumpSettings HeatPump::getSettings() {
 }
 
 void HeatPump::setSettings(heatpumpSettings settings) {
-  HeatPump::setPowerSetting(settings.power);
-  HeatPump::setModeSetting(settings.mode);
-  HeatPump::setTemperature(settings.temperature);
-  HeatPump::setFanSpeed(settings.fan);
-  HeatPump::setVaneSetting(settings.vane);
-  HeatPump::setWideVaneSetting(settings.wideVane);
+  setPowerSetting(settings.power);
+  setModeSetting(settings.mode);
+  setTemperature(settings.temperature);
+  setFanSpeed(settings.fan);
+  setVaneSetting(settings.vane);
+  setWideVaneSetting(settings.wideVane);
 }
 
 bool HeatPump::getPowerSettingBool() {
