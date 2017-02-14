@@ -154,9 +154,9 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       hp.setVaneSetting(vane);
     }
     
-    if (root.containsKey("windVane")) {
-      String windVane = root["windVane"];
-      hp.setWideVaneSetting(windVane);
+    if (root.containsKey("wideVane")) {
+      String wideVane = root["wideVane"];
+      hp.setWideVaneSetting(wideVane);
     }
     
     bool result = hp.update();
