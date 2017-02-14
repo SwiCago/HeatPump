@@ -1,15 +1,20 @@
 
 #include <HeatPump.h>
-
+ HeatPump hp;
 void setup() {
   // put your setup code here, to run once:
- HeatPump hp;
- hp.connect(&Serial);     //For ESP8266
- //hp.connect(&Serial1);  //Use UART1 or Arduino Micro Pro
-               //   power mode  temp fan vane dir 
- String settings[6]={"ON","FAN","26","4","3","|"};
- hp.setSettings(settings);
- hp.update();
+
+  hp.connect(&Serial);    //For ESP8266
+//hp.connect(&Serial1);   //Use UART1 or Arduino Micro Pro
+  heatpumpSettings mySettings = hp.getSettings();
+  mySettings.power = "ON";
+  mySettings.mode = "FAN";
+  mySettings.temperature = 26;
+  mySettings.fan = "4";
+  mySettings.vane = "3";
+  mySettings.wideVane = "|";
+  hp.setSettings(mySettings);
+  hp.update();
 }
 
 void loop() {
