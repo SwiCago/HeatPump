@@ -135,5 +135,7 @@ class HeatPump
 
     void setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE);
     void setPacketReceivedCallback(PACKET_RECEIVED_CALLBACK_SIGNATURE);
+
+    void sendCustomPacket(byte data[], int len); 
 };
 #endif

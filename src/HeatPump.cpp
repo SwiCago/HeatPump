@@ -199,6 +199,25 @@ void HeatPump::setPacketReceivedCallback(PACKET_RECEIVED_CALLBACK_SIGNATURE) {
   this->packetReceivedCallback = packetReceivedCallback;
 }
 
+//#### WARNING, THE FOLLOWING METHOD CAN F--K YOUR HP UP, USE WISELY ####
+void HeatPump::sendCustomPacket(byte data[], int len) {
+  while(!canSend()) { delay(10); }
+  len += 2;                          //+2, for FC and CHKSUM
+  byte packet[len];
+  packet[0] = 0xfc;
+  for (int i = 0; i < len-1; i++) {
+    packet[i+1] = data[i]; 
+  }
+  byte chkSum = checkSum(data, len-1);
+  packet[len] = chkSum;
+
+  for (int i = 0; i < len; i++) {
+    _HardSerial->write((uint8_t)packet[i]);
+  }
+  lastUpdateSuccessful = false;
+  delay(1000);
+}
+
 // Private Methods //////////////////////////////////////////////////////////////
 
 int HeatPump::lookupByteMapIndex(const int valuesMap[], int len, int lookupValue) {
