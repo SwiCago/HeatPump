@@ -208,7 +208,7 @@ void HeatPump::sendCustomPacket(byte data[], int len) {
   for (int i = 0; i < len-1; i++) {
     packet[i+1] = data[i]; 
   }
-  byte chkSum = checkSum(data, len-1);
+  byte chkSum = checkSum(packet, len-1);
   packet[len] = chkSum;
 
   for (int i = 0; i < len; i++) {
