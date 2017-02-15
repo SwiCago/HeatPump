@@ -6,13 +6,14 @@ void setup() {
 
   hp.connect(&Serial);    //For ESP8266
 //hp.connect(&Serial1);   //Use UART1 or Arduino Micro Pro
-  heatpumpSettings mySettings = hp.getSettings();
-  mySettings.power = "ON";
-  mySettings.mode = "FAN";
-  mySettings.temperature = 26;
-  mySettings.fan = "4";
-  mySettings.vane = "3";
-  mySettings.wideVane = "|";
+  heatpumpSettings mySettings = {
+    "ON",  /* ON/OFF */
+    "FAN", /* HEAT/COOL/FAN/DRY/AUTO */
+    26,    /* Between 16 and 31 */
+    "4",   /* Fan speed: 1-4, AUTO, or QUIET */
+    "3",   /* Air direction (vertical): 1-5, SWING, or AUTO */
+    "|"    /* Air direction (horizontal): <<, <, |, >, >>, <>, or SWING */
+  };
   hp.setSettings(mySettings);
   hp.update();
 }
