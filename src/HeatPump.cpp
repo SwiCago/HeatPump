@@ -394,9 +394,11 @@ int HeatPump::getData() {
         {   
           int receivedRoomTemp = lookupByteMapValue(ROOM_TEMP_MAP, ROOM_TEMP, 32, data[3]);
 
-          if(currentRoomTemp != receivedRoomTemp){
-             currentRoomTemp = receivedRoomTemp;
-             roomTempChangedCallback(currentRoomTemp);
+          if(roomTempChangedCallback && currentRoomTemp != receivedRoomTemp){
+            currentRoomTemp = receivedRoomTemp;
+            roomTempChangedCallback(currentRoomTemp);
+          } else {
+            currentRoomTemp = receivedRoomTemp;
           }
           return 2;
         }
