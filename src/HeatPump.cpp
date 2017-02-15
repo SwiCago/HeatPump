@@ -47,8 +47,10 @@ bool HeatPump::info_mode = false;
 // Constructor /////////////////////////////////////////////////////////////////
 
 HeatPump::HeatPump() {
-  heatpumpSettings defaultSettings = {POWER_MAP[0],MODE_MAP[3],TEMP_MAP[9],FAN_MAP[2],VANE_MAP[1],WIDEVANE_MAP[2],ROOM_TEMP_MAP[12]};
+  heatpumpSettings defaultSettings = {POWER_MAP[0],MODE_MAP[3],TEMP_MAP[9],FAN_MAP[2],VANE_MAP[1],WIDEVANE_MAP[2]};
   currentSettings = defaultSettings;
+  
+  currentRoomTemp = ROOM_TEMP_MAP[12];
 
   // Set wanted settings to current settings. This way if a single setting is
   // changed going forward (e.g. setVaneSetting()), the other settings won't
@@ -178,7 +180,7 @@ void HeatPump::setWideVaneSetting(String setting) {
 }
 
 int HeatPump::getRoomTemperature() {
-  return currentSettings.roomTemperature;
+  return currentRoomTemp;
 }
 
 unsigned int HeatPump::FahrenheitToCelsius(unsigned int tempF) {
@@ -373,8 +375,7 @@ int HeatPump::getData() {
           receivedSettings.temperature = lookupByteMapValue(TEMP_MAP, TEMP, 16, data[5]);
           receivedSettings.fan         = lookupByteMapValue(FAN_MAP, FAN, 6, data[6]);
           receivedSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
-          receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);     
-          receivedSettings.roomTemperature = currentSettings.roomTemperature;
+          receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);   
           
           if(settingsChangedCallback && receivedSettings != currentSettings) {
             currentSettings = receivedSettings;
@@ -387,7 +388,12 @@ int HeatPump::getData() {
         } 
         else if(header[1] == 0x62 && data[0] == 0x03) //Room temperature reading         
         {   
-          currentSettings.roomTemperature = lookupByteMapValue(ROOM_TEMP_MAP, ROOM_TEMP, 32, data[3]);
+          int receivedRoomTemp = lookupByteMapValue(ROOM_TEMP_MAP, ROOM_TEMP, 32, data[3]);
+
+          if(currentRoomTemp != receivedRoomTemp){
+             currentRoomTemp = receivedRoomTemp;
+             roomTempChangedCallback(currentRoomTemp);
+          }
           return 2;
         }
         else if(header[1] == 0x61) //Last update was successful
