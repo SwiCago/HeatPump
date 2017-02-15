@@ -50,7 +50,6 @@ struct heatpumpSettings {
   String fan;
   String vane; //vertical vane, up/down
   String wideVane; //horizontal vane, left/right
-  int roomTemperature; //TODO: this isn't a "setting" as such, shouldn't be in struct. Not compared in comparison operators below
 };
 
 bool operator==(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
@@ -87,6 +86,8 @@ class HeatPump
     // these settings will be initialised in connect()
     heatpumpSettings currentSettings;
     heatpumpSettings wantedSettings;
+  
+    int roomTemperature;
              
     HardwareSerial * _HardSerial;
     static bool lastUpdateSuccessful;
@@ -107,6 +108,7 @@ class HeatPump
     // callbacks
     SETTINGS_CHANGED_CALLBACK_SIGNATURE;
     PACKET_RECEIVED_CALLBACK_SIGNATURE;
+    ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE;
 
   public:
     HeatPump();
@@ -135,6 +137,7 @@ class HeatPump
 
     void setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE);
     void setPacketReceivedCallback(PACKET_RECEIVED_CALLBACK_SIGNATURE);
+    void setRoomTempChangedCallback(ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE);
 
     void sendCustomPacket(byte data[], int len); 
 };
