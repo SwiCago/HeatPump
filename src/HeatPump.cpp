@@ -201,6 +201,10 @@ void HeatPump::setPacketReceivedCallback(PACKET_RECEIVED_CALLBACK_SIGNATURE) {
   this->packetReceivedCallback = packetReceivedCallback;
 }
 
+void HeatPump::setRoomTempChangedCallback(ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE) {
+  this->roomTempChangedCallback = roomTempChangedCallback;
+}
+
 //#### WARNING, THE FOLLOWING METHOD CAN F--K YOUR HP UP, USE WISELY ####
 void HeatPump::sendCustomPacket(byte data[], int len) {
   while(!canSend()) { delay(10); }
