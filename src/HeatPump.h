@@ -89,7 +89,7 @@ class HeatPump
     heatpumpSettings currentSettings;
     heatpumpSettings wantedSettings;
   
-    int roomTemperature;
+    int currentRoomTemp;
              
     HardwareSerial * _HardSerial;
     static bool lastUpdateSuccessful;
