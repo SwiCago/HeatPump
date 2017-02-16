@@ -33,7 +33,6 @@ hp.update();
 
 ```c++
 void setup() {
-  heatpumpSettings settings[
   HeatPump hp;
   hp.connect(&Serial);
 }
@@ -42,7 +41,7 @@ void loop() {
   hp.sync();
 
   /* get settings from heatpump, including room temperature in settings.roomTemperature */
-  settings = hp.getSettings();
+  heatpumpSettings settings = hp.getSettings();
 }
 
 ```
