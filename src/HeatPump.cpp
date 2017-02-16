@@ -79,20 +79,21 @@ bool HeatPump::update() {
   while(!canSend()) { delay(10); }
   byte packet[22] = {};
   createPacket(packet, wantedSettings);
-  for (int i = 0; i < 22; i++) {
-    _HardSerial->write((uint8_t)packet[i]);
-  }
+  writePacket(packet);
+
   lastUpdateSuccessful = false;
   delay(1000);
   
-  getData();
+  readPacket();
   
   if(lastUpdateSuccessful) {
     currentSettings = wantedSettings;
+
+    if(settingsChangedCallback && settingsChangedCallbackOptions & SETTINGS_CHANGED_CALLBACK_UPDATE) {
+      settingsChangedCallback();
+    }
   }
   
-  lastSend = millis();
-
   return lastUpdateSuccessful;
 }
 
@@ -100,13 +101,10 @@ void HeatPump::sync() {
   if(canSend()) {
     byte packet[22] = {};
     createInfoPacket(packet);
-    for (int i = 0; i < 22; i++) {
-       _HardSerial->write((uint8_t)packet[i]);
-    }
-    lastSend = millis();
+    writePacket(packet);
   }
 
-  getData(); 
+  readPacket(); 
 }
 
 
@@ -193,7 +191,8 @@ unsigned int HeatPump::CelsiusToFahrenheit(unsigned int tempC) {
   return currentSettings.mode == MODE_MAP[0] ? ceil(temp) : floor(temp);
 }
 
-void HeatPump::setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE) {
+void HeatPump::setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE, byte callbackOptions) {
+  settingsChangedCallbackOptions = callbackOptions;
   this->settingsChangedCallback = settingsChangedCallback;
 }
 
@@ -315,7 +314,14 @@ void HeatPump::createInfoPacket(byte *packet) {
   packet[21] = chkSum;
 }
 
-int HeatPump::getData() {
+void HeatPump::writePacket(byte *packet) {
+  for (int i = 0; i < 22; i++) {
+     _HardSerial->write((uint8_t)packet[i]);
+  }
+  lastSend = millis();
+}
+
+int HeatPump::readPacket() {
   byte header[5] = {};
   byte data[32] = {};
   bool found_start = false;
@@ -323,7 +329,7 @@ int HeatPump::getData() {
   byte checksum = 0;
   byte data_len = 0;
   
-  if( _HardSerial->available() > 0)
+  if(_HardSerial->available() > 0)
   {
     // read until we get start byte 0xfc
     while(_HardSerial->available() > 0 && !found_start)
@@ -368,7 +374,14 @@ int HeatPump::getData() {
       
       if(data[data_len] == checksum) {
         if(packetReceivedCallback) {
-          packetReceivedCallback(data, data_len);
+          byte packet[37]; // we are going to put header[5] and data[32] into this, so the whole packet is sent to the callback
+          for(int i=0; i<5; i++) {
+            packet[i] = header[i];
+          }
+          for(int i=0; i<data_len; i++) {
+            packet[(i+5)] = data[i];
+          }
+          packetReceivedCallback(packet, (5 + data_len));
         }
 
         if(header[1] == 0x62 && data[0] == 0x02)  //settings information
@@ -381,7 +394,7 @@ int HeatPump::getData() {
           receivedSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
           receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);   
           
-          if(settingsChangedCallback && receivedSettings != currentSettings) {
+          if(settingsChangedCallback && settingsChangedCallbackOptions & SETTINGS_CHANGED_CALLBACK_READ && receivedSettings != currentSettings) {
             currentSettings = receivedSettings;
             settingsChangedCallback();
           } else {
