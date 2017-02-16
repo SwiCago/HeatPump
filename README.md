@@ -13,11 +13,11 @@ hp.connect(&Serial);
 
 heatpumpSettings settings = {
     "ON",  /* ON/OFF */
-	"FAN", /* HEAT/COOL/FAN/DRY/AUTO */
-	2",    /* Between 16 and 31 */
-	"4",   /* Fan speed: 1-4, AUTO, or QUIET */
-	"3",   /* Air direction (vertical): 1-5, SWING, or AUTO */
-	"|"    /* Air direction (horizontal): <<, <, |, >, >>, <>, or SWING */
+    "FAN", /* HEAT/COOL/FAN/DRY/AUTO */
+    26,    /* Between 16 and 31 */
+    "4",   /* Fan speed: 1-4, AUTO, or QUIET */
+    "3",   /* Air direction (vertical): 1-5, SWING, or AUTO */
+    "|"    /* Air direction (horizontal): <<, <, |, >, >>, <>, or SWING */
 }; 
 
 hp.setSettings(settings);
