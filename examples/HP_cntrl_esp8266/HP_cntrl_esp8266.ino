@@ -14,7 +14,7 @@ const char* html = "<html>\n<head>\n<meta name='viewport' content='width=device-
                    "<tr>\n<td>Temp:</td>\n<td>\n_TEMP_</td>\n</tr>"
                    "<tr>\n<td>Fan:</td>\n<td>\n_FAN_</td>\n</tr>\n"
                    "<tr>\n<td>Vane:</td><td>\n_VANE_</td>\n</tr>\n"
-                   "<tr>\n<td>Direction:</td>\n<td>\n_DIR_</td>\n</tr>\n"
+                   "<tr>\n<td>WideVane:</td>\n<td>\n_WVANE_</td>\n</tr>\n"
                    "</table>\n<br/><input type='submit' value='Change Settings'/>\n</form><br/><br/>"
                    "<form><input type='submit' name='CONNECT' value='Re-Connect'/>\n</form>\n"
                    "</body>\n</html>\n";
@@ -26,11 +26,17 @@ DNSServer dnsServer;
 ESP8266WebServer server(80);
 
 HeatPump hp;
-String wantedSettings[6] = {};
 
 void setup() {
   hp.connect(&Serial);
-  hp.getSettings(wantedSettings);
+  hp.setSettings({ //set some default settings
+    "ON",  /* ON/OFF */
+    "FAN", /* HEAT/COOL/FAN/DRY/AUTO */
+    26,    /* Between 16 and 31 */
+    "4",   /* Fan speed: 1-4, AUTO, or QUIET */
+    "3",   /* Air direction (vertical): 1-5, SWING, or AUTO */
+    "|"    /* Air direction (horizontal): <<, <, |, >, >>, <>, or SWING */
+  });
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(apIP, apIP, netMsk);
   WiFi.softAP(ssid);//, password);
@@ -60,7 +66,7 @@ String createOptionSelector(String name, const String values[], int len, String 
   for (int i = 0; i < len; i++) {
     String encoded = encodeString(values[i]);
     str += "<option value='";
-    str += String(i);
+    str += values[i];
     str += "'";
     str += values[i] == value ? " selected" : "";
     str += ">";
@@ -78,13 +84,19 @@ void handleNotFound() {
 void handle_root() {
   change_states();
   String toSend = html;
-  toSend.replace("_POWER_", createOptionSelector("POWER", hp.POWER_MAP, 2, wantedSettings[0]));
-  toSend.replace("_MODE_", createOptionSelector("MODE", hp.MODE_MAP, 5, wantedSettings[1]));
-  toSend.replace("_TEMP_", createOptionSelector("TEMP", hp.TEMP_MAP, 16, wantedSettings[2]));
-  toSend.replace("_FAN_", createOptionSelector("FAN", hp.FAN_MAP, 6, wantedSettings[3]));
-  toSend.replace("_VANE_", createOptionSelector("VANE", hp.VANE_MAP, 7, wantedSettings[4]));
-  toSend.replace("_DIR_", createOptionSelector("DIR", hp.DIR_MAP, 7, wantedSettings[5]));
-  toSend.replace("_ROOMTEMP_", hp.getRoomTemperature() + "°C");
+  String power[2] = {"OFF", "ON"}; 
+  toSend.replace("_POWER_", createOptionSelector("POWER", power, 2, hp.getPowerSetting()));
+  String mode[5] = {"HEAT", "DRY", "COOL", "FAN", "AUTO"};
+  toSend.replace("_MODE_", createOptionSelector("MODE", mode, 5, hp.getModeSetting()));
+  String temp[16] = {"31", "30", "29", "28", "27", "26", "25", "24", "23", "22", "21", "20", "19", "18", "17", "16"};
+  toSend.replace("_TEMP_", createOptionSelector("TEMP", temp, 16, String(hp.getTemperature())));
+  String fan[6] = {"AUTO", "QUIET", "1", "2", "3", "4"};
+  toSend.replace("_FAN_", createOptionSelector("FAN", fan, 6, hp.getFanSpeed()));
+  String vane[7] = {"AUTO", "1", "2", "3", "4", "5", "SWING"};
+  toSend.replace("_VANE_", createOptionSelector("VANE", vane, 7, hp.getVaneSetting()));
+  String widevane[7] = {"<<", "<", "|", ">", ">>", "<>", "SWING"}; 
+  toSend.replace("_WVANE_", createOptionSelector("WIDEVANE", widevane, 7, hp.getWideVaneSetting()));
+  toSend.replace("_ROOMTEMP_", String(hp.getRoomTemperature()) + "°C");
   server.send(200, "text/html", toSend);
   delay(100);
 }
@@ -94,38 +106,24 @@ void change_states() {
     hp.connect(&Serial);
   }
   else {
-    boolean update = false;
     if (server.hasArg("POWER")) {
-      wantedSettings[0] = hp.POWER_MAP[server.arg("POWER").toInt()];
-      hp.setPowerSetting(wantedSettings[0]);
-      update = true;
+      hp.setPowerSetting(server.arg("POWER"));
     }
     if (server.hasArg("MODE")) {
-      wantedSettings[1] = hp.MODE_MAP[server.arg("MODE").toInt()];
-      hp.setModeSetting(wantedSettings[1]);
-      update = true;
+      hp.setModeSetting(server.arg("MODE"));
     }
     if (server.hasArg("TEMP")) {
-      wantedSettings[2] = hp.TEMP_MAP[server.arg("TEMP").toInt()];
-      hp.setTemperature(wantedSettings[2]);
-      update = true;
+      hp.setTemperature(server.arg("TEMP").toInt());
     }
     if (server.hasArg("FAN")) {
-      wantedSettings[3] = hp.FAN_MAP[server.arg("FAN").toInt()];
-      hp.setFanSpeed(wantedSettings[3]);
-      update = true;
+      hp.setFanSpeed(server.arg("FAN"));
     }
     if (server.hasArg("VANE")) {
-      wantedSettings[4] = hp.VANE_MAP[server.arg("VANE").toInt()];
-      hp.setVaneSetting(wantedSettings[4]);
-      update = true;
+      hp.setVaneSetting(server.arg("VANE"));
     }
     if (server.hasArg("DIR")) {
-      wantedSettings[5] = hp.DIR_MAP[server.arg("DIR").toInt()];
-      hp.setDirectionSetting(wantedSettings[5]);
-      update = true;
+      hp.setWideVaneSetting(server.arg("WIDEVANE"));
     }
-    if(update) {
-      hp.update(); }
+    hp.update(); 
   }
 }
