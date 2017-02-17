@@ -66,8 +66,21 @@ class HeatPump
     static const int HEADER_LEN  = 8;
 
     const byte INFOHEADER[5]  = {0xfc, 0x42, 0x01, 0x30, 0x10};
-    const byte INFOMODE[2]    = {0x02, 0x03};
     static const int INFOHEADER_LEN  = 5;
+ 
+    // indexes for INFOMODE array below   
+    const int RQST_PKT_SETTINGS  = 0;
+    const int RQST_PKT_ROOM_TEMP = 1;
+
+    const byte INFOMODE[2]    = {
+      0x02, // request a settings packet - RQST_PKT_SETTINGS
+      0x03  // request the current room temp - RQST_PKT_ROOM_TEMP
+    };
+
+    const int RCVD_PKT_FAIL           = 0;
+    const int RCVD_PKT_SETTINGS       = 1;
+    const int RCVD_PKT_ROOM_TEMP      = 2;
+    const int RCVD_PKT_UPDATE_SUCCESS = 3;
 
     const byte POWER[2]          = {0x00, 0x01};
     const String POWER_MAP[2]    = {"OFF", "ON"};
@@ -95,7 +108,6 @@ class HeatPump
     int currentRoomTemp;
              
     HardwareSerial * _HardSerial;
-    static bool lastUpdateSuccessful;
     static unsigned int lastSend;
     static bool info_mode;
 
@@ -107,7 +119,7 @@ class HeatPump
     bool canSend();
     byte checkSum(byte bytes[], int len);
     void createPacket(byte *packet, heatpumpSettings settings);
-    void createInfoPacket(byte *packet);
+    void createInfoPacket(byte *packet, byte packetType);
     int readPacket();
     void writePacket(byte *packet);
 
@@ -120,7 +132,7 @@ class HeatPump
     HeatPump();
     void connect(HardwareSerial *serial);
     bool update();
-    void sync();
+    void sync(byte packetType = NULL);
     heatpumpSettings getSettings();
     void setSettings(heatpumpSettings settings);
     void setPowerSetting(bool setting);

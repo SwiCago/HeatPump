@@ -40,7 +40,6 @@ bool operator!=(const heatpumpSettings& lhs, const heatpumpSettings& rhs) {
 
 // Initialize Class Variables //////////////////////////////////////////////////
 
-bool HeatPump::lastUpdateSuccessful = false;
 unsigned int HeatPump::lastSend = 0;
 bool HeatPump::info_mode = false;
 
@@ -64,8 +63,6 @@ void HeatPump::connect(HardwareSerial *serial) {
   _HardSerial = serial;
   _HardSerial->begin(2400, SERIAL_8E1);
   
-  lastUpdateSuccessful = false;
-  
   delay(2000);
   for(int cnt = 0; cnt < 2; cnt++) {
     for(int i = 0; i < 8; i++) {
@@ -81,26 +78,25 @@ bool HeatPump::update() {
   createPacket(packet, wantedSettings);
   writePacket(packet);
 
-  lastUpdateSuccessful = false;
   delay(1000);
   
-  readPacket();
+  int packetType = readPacket();
   
-  if(lastUpdateSuccessful) {
+  if(packetType == RCVD_PKT_UPDATE_SUCCESS) {
     currentSettings = wantedSettings;
 
-    if(settingsChangedCallback && settingsChangedCallbackOptions & SETTINGS_CHANGED_CALLBACK_UPDATE) {
-      settingsChangedCallback();
-    }
+    sync(RQST_PKT_SETTINGS);
+
+    return true;
+  } else {
+    return false;
   }
-  
-  return lastUpdateSuccessful;
 }
 
-void HeatPump::sync() {
+void HeatPump::sync(byte packetType) {
   if(canSend()) {
     byte packet[22] = {};
-    createInfoPacket(packet);
+    createInfoPacket(packet, packetType);
     writePacket(packet);
   }
 
@@ -219,7 +215,6 @@ void HeatPump::sendCustomPacket(byte data[], int len) {
   for (int i = 0; i < len; i++) {
     _HardSerial->write((uint8_t)packet[i]);
   }
-  lastUpdateSuccessful = false;
   delay(1000);
 }
 
@@ -277,40 +272,49 @@ byte HeatPump::checkSum(byte bytes[], int len) {
 void HeatPump::createPacket(byte *packet, heatpumpSettings settings) {
   byte data[21] = {};
   for (int i = 0; i < HEADER_LEN; i++) {
-    data[i] = HEADER[i];
+    packet[i] = HEADER[i];
   }
-  data[8]  = POWER[lookupByteMapIndex(POWER_MAP, 2, settings.power)];
-  data[9]  = MODE[lookupByteMapIndex(MODE_MAP, 5, settings.mode)];
-  data[10] = TEMP[lookupByteMapIndex(TEMP_MAP, 16, settings.temperature)];
-  data[11] = FAN[lookupByteMapIndex(FAN_MAP, 6, settings.fan)];
-  data[12] = VANE[lookupByteMapIndex(VANE_MAP, 7, settings.vane)];
-  data[13] = 0x00;
-  data[14] = 0x00;
-  data[15] = WIDEVANE[lookupByteMapIndex(WIDEVANE_MAP, 7, settings.wideVane)];
+
+  packet[8]  = POWER[lookupByteMapIndex(POWER_MAP, 2, settings.power)];
+  packet[9]  = MODE[lookupByteMapIndex(MODE_MAP, 5, settings.mode)];
+  packet[10] = TEMP[lookupByteMapIndex(TEMP_MAP, 16, settings.temperature)];
+  packet[11] = FAN[lookupByteMapIndex(FAN_MAP, 6, settings.fan)];
+  packet[12] = VANE[lookupByteMapIndex(VANE_MAP, 7, settings.vane)];
+  packet[13] = 0x00;
+  packet[14] = 0x00;
+  packet[15] = WIDEVANE[lookupByteMapIndex(WIDEVANE_MAP, 7, settings.wideVane)];
+
+  // pad the packet out 
   for (int i = 0; i < 5; i++) {
-    data[i + 16] = 0x00;
+    packet[i + 16] = 0x00;
   }
+
+  // add the checksum
   byte chkSum = checkSum(data, 21);
-  for (int i = 0; i < 21; i++) {
-    packet[i] = data[i];
-  }
   packet[21] = chkSum;
 }
 
-void HeatPump::createInfoPacket(byte *packet) {
-  byte data[21] = {};
-  for (int i = 0; i < 5; i++) {
-    data[i] = INFOHEADER[i];
+void HeatPump::createInfoPacket(byte *packet, byte packetType) {
+  // add the header to the packet
+  for (int i = 0; i < INFOHEADER_LEN; i++) {
+    packet[i] = INFOHEADER[i];
   }
-  data[5]  = INFOMODE[info_mode ? 1 : 0];
-  info_mode = !info_mode;
+  
+  // set the mode - settings or room temperature
+  if(packetType) {
+    packet[5] = INFOMODE[packetType];
+  } else {
+    packet[5] = INFOMODE[info_mode ? 1 : 0];
+    info_mode = !info_mode;
+  }
+
+  // pad the packet out
   for (int i = 0; i < 15; i++) {
-    data[i + 6] = 0x00;
+    packet[i + 6] = 0x00;
   }
-  byte chkSum = checkSum(data, 21);
-  for (int i = 0; i < 21; i++) {
-    packet[i] = data[i];
-  }
+
+  // add the checksum
+  byte chkSum = checkSum(packet, 21);
   packet[21] = chkSum;
 }
 
@@ -318,11 +322,12 @@ void HeatPump::writePacket(byte *packet) {
   for (int i = 0; i < 22; i++) {
      _HardSerial->write((uint8_t)packet[i]);
   }
+
   lastSend = millis();
 }
 
 int HeatPump::readPacket() {
-  byte header[5] = {};
+  byte header[INFOHEADER_LEN] = {};
   byte data[32] = {};
   bool found_start = false;
   int data_sum = 0;
@@ -343,7 +348,7 @@ int HeatPump::readPacket() {
 
     if(!found_start)
     {
-      return -1;
+      return RCVD_PKT_FAIL;
     }
     
     //read header
@@ -401,7 +406,7 @@ int HeatPump::readPacket() {
             currentSettings = receivedSettings;
           }
 
-          return 1;
+          return RCVD_PKT_SETTINGS;
         } 
         else if(header[1] == 0x62 && data[0] == 0x03) //Room temperature reading         
         {   
@@ -413,19 +418,17 @@ int HeatPump::readPacket() {
           } else {
             currentRoomTemp = receivedRoomTemp;
           }
-          return 2;
+          return RCVD_PKT_ROOM_TEMP;
         }
         else if(header[1] == 0x61) //Last update was successful
         {
-          lastUpdateSuccessful = true;
-          return 3;
+          return RCVD_PKT_UPDATE_SUCCESS;
         }
       }
     }
   }
 
-  header[0] = 0x00;
-  
-  return -1;
+  return RCVD_PKT_FAIL;
 }
+
 
