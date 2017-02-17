@@ -68,10 +68,6 @@ class HeatPump
     const byte INFOHEADER[5]  = {0xfc, 0x42, 0x01, 0x30, 0x10};
     static const int INFOHEADER_LEN  = 5;
  
-    // indexes for INFOMODE array below   
-    const int RQST_PKT_SETTINGS  = 0;
-    const int RQST_PKT_ROOM_TEMP = 1;
-
     const byte INFOMODE[2]    = {
       0x02, // request a settings packet - RQST_PKT_SETTINGS
       0x03  // request the current room temp - RQST_PKT_ROOM_TEMP
@@ -98,8 +94,6 @@ class HeatPump
                                     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
     const int ROOM_TEMP_MAP[32]  = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
                                     26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41};
-
-    int settingsChangedCallbackOptions;
 
     // these settings will be initialised in connect()
     heatpumpSettings currentSettings;
@@ -129,6 +123,10 @@ class HeatPump
     ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE;
 
   public:
+    // indexes for INFOMODE array (public so they can be optionally passed to sync())
+    const int RQST_PKT_SETTINGS  = 0;
+    const int RQST_PKT_ROOM_TEMP = 1;
+
     HeatPump();
     void connect(HardwareSerial *serial);
     bool update();
@@ -153,14 +151,11 @@ class HeatPump
     unsigned int FahrenheitToCelsius(unsigned int tempF);
     unsigned int CelsiusToFahrenheit(unsigned int tempC);
 
-    void setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE, byte callbackOptions = (SETTINGS_CHANGED_CALLBACK_READ | SETTINGS_CHANGED_CALLBACK_UPDATE));
+    void setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE);
     void setPacketReceivedCallback(PACKET_RECEIVED_CALLBACK_SIGNATURE);
     void setRoomTempChangedCallback(ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE);
 
     void sendCustomPacket(byte data[], int len); 
-
-    const static byte SETTINGS_CHANGED_CALLBACK_UPDATE  = B00000001;
-    const static byte SETTINGS_CHANGED_CALLBACK_READ    = B00000010;
 
 };
 #endif

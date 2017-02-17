@@ -187,8 +187,7 @@ unsigned int HeatPump::CelsiusToFahrenheit(unsigned int tempC) {
   return currentSettings.mode == MODE_MAP[0] ? ceil(temp) : floor(temp);
 }
 
-void HeatPump::setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE, byte callbackOptions) {
-  settingsChangedCallbackOptions = callbackOptions;
+void HeatPump::setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE) {
   this->settingsChangedCallback = settingsChangedCallback;
 }
 
@@ -399,7 +398,7 @@ int HeatPump::readPacket() {
           receivedSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
           receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);   
           
-          if(settingsChangedCallback && settingsChangedCallbackOptions & SETTINGS_CHANGED_CALLBACK_READ && receivedSettings != currentSettings) {
+          if(settingsChangedCallback && receivedSettings != currentSettings) {
             currentSettings = receivedSettings;
             settingsChangedCallback();
           } else {
