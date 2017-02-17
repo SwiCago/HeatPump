@@ -35,11 +35,11 @@
 #ifdef ESP8266
 #include <functional>
 #define SETTINGS_CHANGED_CALLBACK_SIGNATURE std::function<void()> settingsChangedCallback
-#define PACKET_RECEIVED_CALLBACK_SIGNATURE std::function<void(byte* data, unsigned int length)> packetReceivedCallback
+#define PACKET_CALLBACK_SIGNATURE std::function<void(byte* data, unsigned int length, char* packetDirection)> packetCallback
 #define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE std::function<void(unsigned int newTemp)> roomTempChangedCallback
 #else
 #define SETTINGS_CHANGED_CALLBACK_SIGNATURE void (*settingsChangedCallback)();
-#define PACKET_RECEIVED_CALLBACK_SIGNATURE void (*packetReceivedCallback)(byte* data, unsigned int length);
+#define PACKET_CALLBACK_SIGNATURE void (*packetCallback)(byte* data, unsigned int length, char* packetDirection);
 #define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE void (*roomTempChangedCallback)(unsigned int newTemp);
 #endif
 
@@ -89,7 +89,7 @@ class HeatPump
     const byte VANE[7]           = {0x00,  0x01, 0x02, 0x03, 0x04, 0x05, 0x07};
     const String VANE_MAP[7]     = {"AUTO", "1", "2", "3", "4", "5", "SWING"};
     const byte WIDEVANE[7]       = {0x01, 0x02, 0x03, 0x04, 0x05, 0x08, 0x0c};
-    const String WIDEVANE_MAP[7] = {"<<", "<", "|", ">", ">>", "<>", "SWING"};
+    const String WIDEVANE_MAP[7] = {"<<", "<",  "|",  ">",  ">>", "<>", "SWING"};
     const byte ROOM_TEMP[32]     = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
                                     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
     const int ROOM_TEMP_MAP[32]  = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
@@ -115,11 +115,11 @@ class HeatPump
     void createPacket(byte *packet, heatpumpSettings settings);
     void createInfoPacket(byte *packet, byte packetType);
     int readPacket();
-    void writePacket(byte *packet);
+    void writePacket(byte *packet, int length);
 
     // callbacks
     SETTINGS_CHANGED_CALLBACK_SIGNATURE;
-    PACKET_RECEIVED_CALLBACK_SIGNATURE;
+    PACKET_CALLBACK_SIGNATURE;
     ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE;
 
   public:
@@ -152,7 +152,7 @@ class HeatPump
     unsigned int CelsiusToFahrenheit(unsigned int tempC);
 
     void setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE);
-    void setPacketReceivedCallback(PACKET_RECEIVED_CALLBACK_SIGNATURE);
+    void setPacketCallback(PACKET_CALLBACK_SIGNATURE);
     void setRoomTempChangedCallback(ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE);
 
     void sendCustomPacket(byte data[], int len); 

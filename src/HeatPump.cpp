@@ -38,6 +38,15 @@ bool operator!=(const heatpumpSettings& lhs, const heatpumpSettings& rhs) {
          lhs.wideVane != rhs.wideVane;
 }
 
+bool operator!(const heatpumpSettings& settings) {
+  return !settings.power && 
+         !settings.mode && 
+         !settings.temperature && 
+         !settings.fan &&
+         !settings.vane &&
+         !settings.wideVane;
+}
+
 // Initialize Class Variables //////////////////////////////////////////////////
 
 unsigned int HeatPump::lastSend = 0;
@@ -46,15 +55,6 @@ bool HeatPump::info_mode = false;
 // Constructor /////////////////////////////////////////////////////////////////
 
 HeatPump::HeatPump() {
-  heatpumpSettings defaultSettings = {POWER_MAP[0],MODE_MAP[3],TEMP_MAP[9],FAN_MAP[2],VANE_MAP[1],WIDEVANE_MAP[2]};
-  currentSettings = defaultSettings;
-  
-  currentRoomTemp = ROOM_TEMP_MAP[12];
-
-  // Set wanted settings to current settings. This way if a single setting is
-  // changed going forward (e.g. setVaneSetting()), the other settings won't
-  // revert to any default wanted settings, but remain as they currently are
-  wantedSettings = currentSettings;
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -74,17 +74,17 @@ void HeatPump::connect(HardwareSerial *serial) {
 
 bool HeatPump::update() {
   while(!canSend()) { delay(10); }
+
   byte packet[22] = {};
   createPacket(packet, wantedSettings);
-  writePacket(packet);
+  writePacket(packet, 22);
 
   delay(1000);
   
   int packetType = readPacket();
   
   if(packetType == RCVD_PKT_UPDATE_SUCCESS) {
-    currentSettings = wantedSettings;
-
+    // call sync() to get the latest settings from the heatpump, which should now have the updated settings
     sync(RQST_PKT_SETTINGS);
 
     return true;
@@ -97,7 +97,7 @@ void HeatPump::sync(byte packetType) {
   if(canSend()) {
     byte packet[22] = {};
     createInfoPacket(packet, packetType);
-    writePacket(packet);
+    writePacket(packet, 22);
   }
 
   readPacket(); 
@@ -191,8 +191,8 @@ void HeatPump::setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE) {
   this->settingsChangedCallback = settingsChangedCallback;
 }
 
-void HeatPump::setPacketReceivedCallback(PACKET_RECEIVED_CALLBACK_SIGNATURE) {
-  this->packetReceivedCallback = packetReceivedCallback;
+void HeatPump::setPacketCallback(PACKET_CALLBACK_SIGNATURE) {
+  this->packetCallback = packetCallback;
 }
 
 void HeatPump::setRoomTempChangedCallback(ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE) {
@@ -211,9 +211,7 @@ void HeatPump::sendCustomPacket(byte data[], int len) {
   byte chkSum = checkSum(packet, len-1);
   packet[len] = chkSum;
 
-  for (int i = 0; i < len; i++) {
-    _HardSerial->write((uint8_t)packet[i]);
-  }
+  writePacket(packet, len);
   delay(1000);
 }
 
@@ -269,7 +267,6 @@ byte HeatPump::checkSum(byte bytes[], int len) {
 }
 
 void HeatPump::createPacket(byte *packet, heatpumpSettings settings) {
-  byte data[21] = {};
   for (int i = 0; i < HEADER_LEN; i++) {
     packet[i] = HEADER[i];
   }
@@ -289,7 +286,7 @@ void HeatPump::createPacket(byte *packet, heatpumpSettings settings) {
   }
 
   // add the checksum
-  byte chkSum = checkSum(data, 21);
+  byte chkSum = checkSum(packet, 21);
   packet[21] = chkSum;
 }
 
@@ -317,9 +314,13 @@ void HeatPump::createInfoPacket(byte *packet, byte packetType) {
   packet[21] = chkSum;
 }
 
-void HeatPump::writePacket(byte *packet) {
-  for (int i = 0; i < 22; i++) {
+void HeatPump::writePacket(byte *packet, int length) {
+  for (int i = 0; i < length; i++) {
      _HardSerial->write((uint8_t)packet[i]);
+  }
+
+  if(packetCallback) {
+    packetCallback(packet, length, "packetSent");
   }
 
   lastSend = millis();
@@ -377,15 +378,15 @@ int HeatPump::readPacket() {
       checksum = (0xfc - data_sum) & 0xff;
       
       if(data[data_len] == checksum) {
-        if(packetReceivedCallback) {
+        if(packetCallback) {
           byte packet[37]; // we are going to put header[5] and data[32] into this, so the whole packet is sent to the callback
           for(int i=0; i<5; i++) {
             packet[i] = header[i];
           }
-          for(int i=0; i<data_len; i++) {
+          for(int i=0; i<(data_len+1); i++) { //must be data_len+1 to pick up checksum byte
             packet[(i+5)] = data[i];
           }
-          packetReceivedCallback(packet, (5 + data_len));
+          packetCallback(packet, (5 + (data_len+1)), "packetRecv");
         }
 
         if(header[1] == 0x62 && data[0] == 0x02)  //settings information
@@ -403,6 +404,11 @@ int HeatPump::readPacket() {
             settingsChangedCallback();
           } else {
             currentSettings = receivedSettings;
+          }
+
+          // if wantedSettings is null (indicating that this is the first time we have synced with the heatpump, set it to receivedSettings
+          if(!wantedSettings) {
+            wantedSettings = receivedSettings;
           }
 
           return RCVD_PKT_SETTINGS;
