@@ -59,7 +59,7 @@ void setup() {
   hp.connect(&Serial);
   
   hp.setSettingsChangedCallback(hpSettingsChanged);
-  hp.setPacketReceivedCallback(hpPacketReceived);
+  hp.setPacketCallback(hpPacketDebug);
 }
 
 void hpSettingsChanged() {
@@ -84,7 +84,7 @@ void hpSettingsChanged() {
     mqtt_client.publish(heatpump_topic, buffer, retain);
 }
 
-void hpPacketReceived(byte* packet, unsigned int length) {
+void hpPacketDebug(byte* packet, unsigned int length, char* packetDirection) {
   if(_debugMode) {
     String message;
     for (int idx = 0; idx < length; idx++) {
@@ -99,7 +99,7 @@ void hpPacketReceived(byte* packet, unsigned int length) {
     
     JsonObject& root = jsonBuffer.createObject();
   
-    root["packet"] = message;
+    root[packetDirection] = message;
   
     char buffer[512];
     root.printTo(buffer, sizeof(buffer));
