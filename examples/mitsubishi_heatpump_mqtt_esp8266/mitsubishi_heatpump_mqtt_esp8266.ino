@@ -4,27 +4,7 @@
 #include <PubSubClient.h>
 #include <HeatPump.h>
 
-
-// wifi settings
-const char* ssid     = "<YOUR WIFI SSID GOES HERE>";
-const char* password = "<YOUR WIFI PASSWORD GOES HERE>";
-
-// mqtt server settings
-const char* mqtt_server   = "<YOUR MQTT BROKER IP/HOSTNAME GOES HERE>";
-const char* mqtt_username = "<YOUR MQTT USERNAME GOES HERE>";
-const char* mqtt_password = "<YOUR MQTT PASSWORD GOES HERE>";
-
-// mqtt client settings
-const char* client_id                   = "heatpump-controller-1"; // Must be unique on the MQTT network
-const char* heatpump_topic              = "heatpump";
-const char* heatpump_set_topic          = "heatpump/set";
-const char* heatpump_temperature_topic  = "heatpump/temperature";
-const char* heatpump_debug_topic        = "heatpump/debug";
-const char* heatpump_debug_set_topic    = "heatpump/debug/set";
-
-// pinouts
-const int redLedPin  = 0; // Onboard LED = digital pin 0 (red LED on adafruit ESP8266 huzzah)
-const int blueLedPin = 2; // Onboard LED = digital pin 0 (blue LED on adafruit ESP8266 huzzah)
+#include "mitsubishi_heatpump_mqtt_esp8266.h"
 
 // wifi, mqtt and heatpump client instances
 WiFiClient espClient;
@@ -52,13 +32,14 @@ void setup() {
   }
 
   // startup mqtt connection
-  mqtt_client.setServer(mqtt_server, 1883);
+  mqtt_client.setServer(mqtt_server, mqtt_port);
   mqtt_client.setCallback(mqttCallback);
 
   // connect to the heatpump
   hp.connect(&Serial);
   
   hp.setSettingsChangedCallback(hpSettingsChanged);
+  hp.setRoomTempChangedCallback(sendCurrentRoomTemperature);
   hp.setPacketCallback(hpPacketDebug);
 }
 
@@ -82,6 +63,21 @@ void hpSettingsChanged() {
 
     bool retain = true;
     mqtt_client.publish(heatpump_topic, buffer, retain);
+}
+
+void sendCurrentRoomTemperature(unsigned int currentRoomTemperature) {
+    const size_t bufferSize = JSON_OBJECT_SIZE(1);
+    DynamicJsonBuffer jsonBuffer(bufferSize);
+    
+    JsonObject& root = jsonBuffer.createObject();
+  
+    root["roomTemperature"] = currentRoomTemperature;
+
+    char buffer[512];
+    root.printTo(buffer, sizeof(buffer));
+
+    bool retain = true;
+    mqtt_client.publish(heatpump_temperature_topic, buffer, retain);
 }
 
 void hpPacketDebug(byte* packet, unsigned int length, char* packetDirection) {
@@ -122,8 +118,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     DynamicJsonBuffer jsonBuffer(bufferSize);
     JsonObject& root = jsonBuffer.parseObject(message);
   
-    if (!root.success())
-    {
+    if (!root.success()) {
       mqtt_client.publish(heatpump_debug_topic, "!root.success(): invalid JSON on heatpump_set_topic...");
       return;
     }
@@ -193,7 +188,6 @@ void reconnect() {
 
 
 uint lastTempSend = 0;
-heatpumpSettings lastSettings;
 
 void loop() {
   if (!mqtt_client.connected()) {
@@ -202,19 +196,8 @@ void loop() {
 
   hp.sync();
   
-  if(!lastTempSend || millis() > (lastTempSend + 60000)) { // only send the temperature every 60s
-    const size_t bufferSize = JSON_OBJECT_SIZE(1);
-    DynamicJsonBuffer jsonBuffer(bufferSize);
-    
-    JsonObject& root = jsonBuffer.createObject();
-  
-    root["roomTemperature"] = hp.getRoomTemperature();
-
-    char buffer[512];
-    root.printTo(buffer, sizeof(buffer));
-
-    mqtt_client.publish(heatpump_temperature_topic, buffer);
-
+  if(!lastTempSend || millis() > (lastTempSend + SEND_ROOM_TEMP_INTERVAL_MS)) { // only send the temperature every 60s
+    sendCurrentRoomTemperature(hp.getRoomTemperature());
     lastTempSend = millis();
   }
 
