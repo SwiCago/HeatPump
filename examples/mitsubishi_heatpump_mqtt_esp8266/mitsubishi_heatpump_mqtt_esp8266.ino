@@ -13,7 +13,7 @@ HeatPump hp;
 
 // debug mode, when true, will send all packets received from the heatpump to topic heatpump_debug_topic
 // this can also be set by sending "on" to heatpump_debug_set_topic
-bool _debugMode = false;
+bool _debugMode = true;
 
 void setup() {
   pinMode(redLedPin, OUTPUT);
@@ -34,13 +34,13 @@ void setup() {
   // startup mqtt connection
   mqtt_client.setServer(mqtt_server, mqtt_port);
   mqtt_client.setCallback(mqttCallback);
+  mqttConnect();
 
-  // connect to the heatpump
-  hp.connect(&Serial);
-  
+  // connect to the heatpump. Callbacks first so that the hpPacketDebug callback is available for connect()
   hp.setSettingsChangedCallback(hpSettingsChanged);
   hp.setRoomTempChangedCallback(sendCurrentRoomTemperature);
   hp.setPacketCallback(hpPacketDebug);
+  hp.connect(&Serial);
 }
 
 void hpSettingsChanged() {
@@ -172,7 +172,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   }
 }
 
-void reconnect() {
+void mqttConnect() {
   // Loop until we're reconnected
   while (!mqtt_client.connected()) {
     // Attempt to connect
@@ -191,7 +191,7 @@ uint lastTempSend = 0;
 
 void loop() {
   if (!mqtt_client.connected()) {
-    reconnect();
+    mqttConnect();
   }
 
   hp.sync();
