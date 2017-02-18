@@ -35,12 +35,12 @@
 #ifdef ESP8266
 #include <functional>
 #define SETTINGS_CHANGED_CALLBACK_SIGNATURE std::function<void()> settingsChangedCallback
-#define PACKET_CALLBACK_SIGNATURE std::function<void(byte* data, unsigned int length, char* packetDirection)> packetCallback
-#define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE std::function<void(unsigned int newTemp)> roomTempChangedCallback
+#define PACKET_CALLBACK_SIGNATURE std::function<void(byte* packet, unsigned int length, char* packetDirection)> packetCallback
+#define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE std::function<void(unsigned int currentRoomTemperature)> roomTempChangedCallback
 #else
 #define SETTINGS_CHANGED_CALLBACK_SIGNATURE void (*settingsChangedCallback)();
-#define PACKET_CALLBACK_SIGNATURE void (*packetCallback)(byte* data, unsigned int length, char* packetDirection);
-#define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE void (*roomTempChangedCallback)(unsigned int newTemp);
+#define PACKET_CALLBACK_SIGNATURE void (*packetCallback)(byte* packet, unsigned int length, char* packetDirection);
+#define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE void (*roomTempChangedCallback)(unsigned int currentRoomTemperature);
 #endif
 
 typedef uint8_t byte;
@@ -60,6 +60,9 @@ bool operator!=(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
 class HeatPump
 {
   private:
+    static const int PACKET_LEN = 22;
+    static const int PACKET_SENT_INTERVAL_MS = 1000;
+
     const byte CONNECT[8] = {0xfc, 0x5a, 0x01, 0x30, 0x02, 0xca, 0x01, 0xa8};
     const byte HEADER[8]  = {0xfc, 0x41, 0x01, 0x30, 0x10, 0x01, 0x9f, 0x00};
     static const int CONNECT_LEN = 8;
@@ -102,8 +105,8 @@ class HeatPump
     int currentRoomTemp;
              
     HardwareSerial * _HardSerial;
-    static unsigned int lastSend;
-    static bool info_mode;
+    unsigned int lastSend;
+    bool infoMode;
 
     String lookupByteMapValue(const String valuesMap[], const byte byteMap[], int len, byte byteValue);
     int    lookupByteMapValue(const int valuesMap[], const byte byteMap[], int len, byte byteValue);
