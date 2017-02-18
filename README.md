@@ -62,7 +62,7 @@ Notes
 -----
 - Tested with ESP8266
 - Tested with Arduino Micro Pro
-- Tested with Mitsubishi HeatPump MSZ-FH/GE(wall units) and SEZ-KD (ducted units)
+- Tested with Mitsubishi HeatPump MSZ-FH/GE(wall units) and SEZ-KD (ducted units) [complete list](https://github.com/SwiCago/HeatPump/issues/13
 
 Demo Circuit
 ------------
