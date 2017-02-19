@@ -47,14 +47,12 @@ bool operator!(const heatpumpSettings& settings) {
          !settings.wideVane;
 }
 
-// Initialize Class Variables //////////////////////////////////////////////////
-
-unsigned int HeatPump::lastSend = 0;
-bool HeatPump::info_mode = false;
 
 // Constructor /////////////////////////////////////////////////////////////////
 
 HeatPump::HeatPump() {
+  lastSend = 0;
+  infoMode = false;
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -63,11 +61,14 @@ void HeatPump::connect(HardwareSerial *serial) {
   _HardSerial = serial;
   _HardSerial->begin(2400, SERIAL_8E1);
   
+  // settle before we start sending packets
   delay(2000);
-  for(int cnt = 0; cnt < 2; cnt++) {
-    for(int i = 0; i < 8; i++) {
-      _HardSerial->write((uint8_t)CONNECT[i]);
-    }
+
+  // send the CONNECT packet twice - need to copy the CONNECT packet locally
+  byte packet[CONNECT_LEN];
+  memcpy(packet, CONNECT, CONNECT_LEN);
+  for(int count = 0; count < 2; count++) {
+    writePacket(packet, CONNECT_LEN);
     delay(1100);
   }
 }
@@ -75,9 +76,9 @@ void HeatPump::connect(HardwareSerial *serial) {
 bool HeatPump::update() {
   while(!canSend()) { delay(10); }
 
-  byte packet[22] = {};
+  byte packet[PACKET_LEN] = {};
   createPacket(packet, wantedSettings);
-  writePacket(packet, 22);
+  writePacket(packet, PACKET_LEN);
 
   delay(1000);
   
@@ -95,9 +96,9 @@ bool HeatPump::update() {
 
 void HeatPump::sync(byte packetType) {
   if(canSend()) {
-    byte packet[22] = {};
+    byte packet[PACKET_LEN] = {};
     createInfoPacket(packet, packetType);
-    writePacket(packet, 22);
+    writePacket(packet, PACKET_LEN);
   }
 
   readPacket(); 
@@ -255,7 +256,7 @@ int HeatPump::lookupByteMapValue(const int valuesMap[], const byte byteMap[], in
 }
 
 bool HeatPump::canSend() {
-  return millis() - 1000 > lastSend;
+  return (millis() - PACKET_SENT_INTERVAL_MS) > lastSend;
 }  
 
 byte HeatPump::checkSum(byte bytes[], int len) {
@@ -300,8 +301,8 @@ void HeatPump::createInfoPacket(byte *packet, byte packetType) {
   if(packetType) {
     packet[5] = INFOMODE[packetType];
   } else {
-    packet[5] = INFOMODE[info_mode ? 1 : 0];
-    info_mode = !info_mode;
+    packet[5] = INFOMODE[infoMode ? 1 : 0];
+    infoMode = !infoMode;
   }
 
   // pad the packet out
@@ -328,26 +329,23 @@ void HeatPump::writePacket(byte *packet, int length) {
 
 int HeatPump::readPacket() {
   byte header[INFOHEADER_LEN] = {};
-  byte data[32] = {};
-  bool found_start = false;
-  int data_sum = 0;
+  byte data[PACKET_LEN] = {};
+  bool foundStart = false;
+  int dataSum = 0;
   byte checksum = 0;
-  byte data_len = 0;
+  byte dataLength = 0;
   
-  if(_HardSerial->available() > 0)
-  {
+  if(_HardSerial->available() > 0) {
     // read until we get start byte 0xfc
-    while(_HardSerial->available() > 0 && !found_start)
-    {
+    while(_HardSerial->available() > 0 && !foundStart) {
       header[0] = _HardSerial->read();
       if(header[0] == 0xFC) {
-        found_start = true;
+        foundStart = true;
         delay(100); // found that this delay increases accuracy when reading, might not be needed though
       }
     }
 
-    if(!found_start)
-    {
+    if(!foundStart) {
       return RCVD_PKT_FAIL;
     }
     
@@ -357,40 +355,39 @@ int HeatPump::readPacket() {
     }
     
     //check header
-    if(header[0] == 0xFC && header[2] == 0x01 && header[3] == 0x30)
-    {
-      data_len = header[4];
+    if(header[0] == 0xFC && header[2] == 0x01 && header[3] == 0x30) {
+      dataLength = header[4];
       
-      for(int i=0;i<data_len;i++) {
+      for(int i=0;i<dataLength;i++) {
         data[i] = _HardSerial->read();
       }
   
       // read checksum byte
-      data[data_len] = _HardSerial->read();
+      data[dataLength] = _HardSerial->read();
   
-      for (int i = 0; i < 5; i++) {
-        data_sum += header[i];
+      for (int i = 0; i < INFOHEADER_LEN; i++) {
+        dataSum += header[i];
       }
-      for (int i = 0; i < data_len; i++) {
-        data_sum += data[i];
+
+      for (int i = 0; i < dataLength; i++) {
+        dataSum += data[i];
       }
   
-      checksum = (0xfc - data_sum) & 0xff;
+      checksum = (0xfc - dataSum) & 0xff;
       
-      if(data[data_len] == checksum) {
+      if(data[dataLength] == checksum) {
         if(packetCallback) {
           byte packet[37]; // we are going to put header[5] and data[32] into this, so the whole packet is sent to the callback
-          for(int i=0; i<5; i++) {
+          for(int i=0; i<INFOHEADER_LEN; i++) {
             packet[i] = header[i];
           }
-          for(int i=0; i<(data_len+1); i++) { //must be data_len+1 to pick up checksum byte
+          for(int i=0; i<(dataLength+1); i++) { //must be dataLength+1 to pick up checksum byte
             packet[(i+5)] = data[i];
           }
-          packetCallback(packet, (5 + (data_len+1)), "packetRecv");
+          packetCallback(packet, PACKET_LEN, "packetRecv");
         }
 
-        if(header[1] == 0x62 && data[0] == 0x02)  //settings information
-        {
+        if(header[1] == 0x62 && data[0] == 0x02) { // setting information
           heatpumpSettings receivedSettings;
           receivedSettings.power       = lookupByteMapValue(POWER_MAP, POWER, 2, data[3]);
           receivedSettings.mode        = lookupByteMapValue(MODE_MAP, MODE, 5, data[4]);
@@ -412,9 +409,7 @@ int HeatPump::readPacket() {
           }
 
           return RCVD_PKT_SETTINGS;
-        } 
-        else if(header[1] == 0x62 && data[0] == 0x03) //Room temperature reading         
-        {   
+        } else if(header[1] == 0x62 && data[0] == 0x03) { //Room temperature reading
           int receivedRoomTemp = lookupByteMapValue(ROOM_TEMP_MAP, ROOM_TEMP, 32, data[3]);
 
           if(roomTempChangedCallback && currentRoomTemp != receivedRoomTemp) {
@@ -424,9 +419,7 @@ int HeatPump::readPacket() {
             currentRoomTemp = receivedRoomTemp;
           }
           return RCVD_PKT_ROOM_TEMP;
-        }
-        else if(header[1] == 0x61) //Last update was successful
-        {
+        } else if(header[1] == 0x61) { //Last update was successful 
           return RCVD_PKT_UPDATE_SUCCESS;
         }
       }

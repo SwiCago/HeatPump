@@ -1,0 +1,44 @@
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+HeatPump	KEYWORD1
+heatpumpSettings	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+connect	KEYWORD2
+update	KEYWORD2
+sync	KEYWORD2
+getSettings	KEYWORD2
+setSettings	KEYWORD2
+setPowerSetting	KEYWORD2
+getPowerSettingBool	KEYWORD2
+getPowerSettin	KEYWORD2
+setPowerSetting	KEYWORD2
+getModeSetting	KEYWORD2
+setModeSetting	KEYWORD2
+getTemperature	KEYWORD2
+setTemperature	KEYWORD2
+getFanSpeed	KEYWORD2
+setFanSpeed	KEYWORD2
+getVaneSetting	KEYWORD2
+setVaneSetting	KEYWORD2
+getWideVaneSetting	KEYWORD2
+setWideVaneSetting	KEYWORD2
+getRoomTemperature	KEYWORD2
+FahrenheitToCelsius	KEYWORD2
+CelsiusToFahrenheit	KEYWORD2
+setSettingsChangedCallback	KEYWORD2
+setPacketCallback	KEYWORD2
+setRoomTempChangedCallback	KEYWORD2
+sendCustomPacket	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+RQST_PKT_SETTINGS	LITERAL1
+RQST_PKT_ROOM_TEMP	LITERAL1
