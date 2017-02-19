@@ -404,9 +404,9 @@ int HeatPump::readPacket() {
           }
 
           // if wantedSettings is null (indicating that this is the first time we have synced with the heatpump, set it to receivedSettings
-          if(!wantedSettings) {
+       
             wantedSettings = receivedSettings;
-          }
+         
 
           return RCVD_PKT_SETTINGS;
         } else if(header[1] == 0x62 && data[0] == 0x03) { //Room temperature reading
