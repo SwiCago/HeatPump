@@ -61,7 +61,7 @@ Installation
 Notes
 -----
 - Tested with ESP8266
-- Tested with Arduino Micro Pro
+- Tested with Arduino Micro Pro / Arduino Nano
 - Tested with Mitsubishi HeatPump MSZ-FH/GE(wall units) and SEZ-KD (ducted units) [complete list](https://github.com/SwiCago/HeatPump/issues/13)
 
 Demo Circuit
