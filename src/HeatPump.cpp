@@ -321,7 +321,7 @@ void HeatPump::writePacket(byte *packet, int length) {
   }
 
   if(packetCallback) {
-    packetCallback(packet, length, "packetSent");
+    packetCallback(packet, length, (char*)"packetSent");
   }
 
   lastSend = millis();
@@ -384,7 +384,7 @@ int HeatPump::readPacket() {
           for(int i=0; i<(dataLength+1); i++) { //must be dataLength+1 to pick up checksum byte
             packet[(i+5)] = data[i];
           }
-          packetCallback(packet, PACKET_LEN, "packetRecv");
+          packetCallback(packet, PACKET_LEN, (char*)"packetRecv");
         }
 
         if(header[1] == 0x62 && data[0] == 0x02) { // setting information
