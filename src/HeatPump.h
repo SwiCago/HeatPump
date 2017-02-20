@@ -133,7 +133,7 @@ class HeatPump
     HeatPump();
     void connect(HardwareSerial *serial);
     bool update();
-    void sync(byte packetType = NULL);
+    void sync(byte packetType = 99);
     heatpumpSettings getSettings();
     void setSettings(heatpumpSettings settings);
     void setPowerSetting(bool setting);
