@@ -104,6 +104,7 @@ class HeatPump
     heatpumpSettings wantedSettings;
   
     int currentRoomTemp;
+    bool autoUpdate;
              
     HardwareSerial * _HardSerial;
     unsigned int lastSend;

@@ -53,6 +53,7 @@ bool operator!(const heatpumpSettings& settings) {
 HeatPump::HeatPump() {
   lastSend = 0;
   infoMode = false;
+  autoUpdate = false;
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -95,13 +96,16 @@ bool HeatPump::update() {
 }
 
 void HeatPump::sync(byte packetType) {
-  if(canSend()) {
+  if(autoUpdate && wantedSettings.power != NULL && wantedSettings != currentSettings && packetType == PACKET_TYPE_DEFAULT) {
+    update();
+  }
+  else if(canSend()) {
     byte packet[PACKET_LEN] = {};
     createInfoPacket(packet, packetType);
     writePacket(packet, PACKET_LEN);
   }
 
-  readPacket(); 
+  readPacket();
 }
 
 
@@ -403,8 +407,8 @@ int HeatPump::readPacket() {
             currentSettings = receivedSettings;
           }
 
-          // if wantedSettings is null (indicating that this is the first time we have synced with the heatpump, set it to receivedSettings
-          if(!wantedSettings) {
+          // if wantedSettings.power is null (indicating that this is the first time we have synced with the heatpump, set it to receivedSettings
+          if (autoUpdate || wantedSettings.power == NULL) {
             wantedSettings = receivedSettings;
           }
 
