@@ -62,6 +62,7 @@ class HeatPump
   private:
     static const int PACKET_LEN = 22;
     static const int PACKET_SENT_INTERVAL_MS = 1000;
+    static const int PACKET_TYPE_DEFAULT = 99;
 
     const byte CONNECT[8] = {0xfc, 0x5a, 0x01, 0x30, 0x02, 0xca, 0x01, 0xa8};
     const byte HEADER[8]  = {0xfc, 0x41, 0x01, 0x30, 0x10, 0x01, 0x9f, 0x00};
@@ -133,7 +134,7 @@ class HeatPump
     HeatPump();
     void connect(HardwareSerial *serial);
     bool update();
-    void sync(byte packetType = 99);
+    void sync(byte packetType = PACKET_TYPE_DEFAULT);
     heatpumpSettings getSettings();
     void setSettings(heatpumpSettings settings);
     void setPowerSetting(bool setting);
