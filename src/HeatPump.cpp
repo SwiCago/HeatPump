@@ -298,7 +298,7 @@ void HeatPump::createInfoPacket(byte *packet, byte packetType) {
   }
   
   // set the mode - settings or room temperature
-  if(packetType != 99) {
+  if(packetType != PACKET_TYPE_DEFAULT) {
     packet[5] = INFOMODE[packetType];
   } else {
     packet[5] = INFOMODE[infoMode ? 1 : 0];
