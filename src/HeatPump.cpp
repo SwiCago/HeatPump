@@ -53,6 +53,8 @@ bool operator!(const heatpumpSettings& settings) {
 HeatPump::HeatPump() {
   lastSend = 0;
   infoMode = false;
+  autoUpdate = false;
+  firstRun = true;
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -95,7 +97,9 @@ bool HeatPump::update() {
 }
 
 void HeatPump::sync(byte packetType) {
-  if(canSend()) {
+  if(autoUpdate && !wantedSettings == false && wantedSettings != currentSettings && packetType == PACKET_TYPE_DEFAULT) {
+     update(); }
+  else if(canSend()) {
     byte packet[PACKET_LEN] = {};
     createInfoPacket(packet, packetType);
     writePacket(packet, PACKET_LEN);
@@ -104,6 +108,13 @@ void HeatPump::sync(byte packetType) {
   readPacket(); 
 }
 
+void HeatPump::enableAutoUpdate() {
+  autoUpdate = true;
+}
+
+void HeatPump::disableAUtoUpdate() {
+  autoUpdate = false;
+}
 
 heatpumpSettings HeatPump::getSettings() {
   return currentSettings;
@@ -417,8 +428,10 @@ int HeatPump::readPacket() {
           }
 
           // if wantedSettings is null (indicating that this is the first time we have synced with the heatpump, set it to receivedSettings
-          if(!wantedSettings) {
-            wantedSettings = receivedSettings;
+          //if(!wantedSettings) {
+          if(firstRun) {
+            wantedSettings = currentSettings;
+            firstRun = false;
           }
 
           return RCVD_PKT_SETTINGS;
