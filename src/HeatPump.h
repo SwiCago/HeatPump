@@ -65,7 +65,7 @@ class HeatPump
     static const int PACKET_TYPE_DEFAULT = 99;
 
     const byte CONNECT[8] = {0xfc, 0x5a, 0x01, 0x30, 0x02, 0xca, 0x01, 0xa8};
-    const byte HEADER[8]  = {0xfc, 0x41, 0x01, 0x30, 0x10, 0x01, 0x9f, 0x00};
+    const byte HEADER[8]  = {0xfc, 0x41, 0x01, 0x30, 0x10, 0x01, 0x00, 0x00};
     static const int CONNECT_LEN = 8;
     static const int HEADER_LEN  = 8;
 
@@ -82,6 +82,8 @@ class HeatPump
     const int RCVD_PKT_ROOM_TEMP      = 2;
     const int RCVD_PKT_UPDATE_SUCCESS = 3;
 
+    const byte CONTROL_PACKET[6] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x80};
+                                  //"POWER","MODE","TEMP","FAN","WANE","WIDEVANE"};
     const byte POWER[2]          = {0x00, 0x01};
     const String POWER_MAP[2]    = {"OFF", "ON"};
     const byte MODE[5]           = {0x01,   0x02,  0x03, 0x07, 0x08};

@@ -271,21 +271,34 @@ void HeatPump::createPacket(byte *packet, heatpumpSettings settings) {
   for (int i = 0; i < HEADER_LEN; i++) {
     packet[i] = HEADER[i];
   }
-
-  packet[8]  = POWER[lookupByteMapIndex(POWER_MAP, 2, settings.power)];
-  packet[9]  = MODE[lookupByteMapIndex(MODE_MAP, 5, settings.mode)];
-  packet[10] = TEMP[lookupByteMapIndex(TEMP_MAP, 16, settings.temperature)];
-  packet[11] = FAN[lookupByteMapIndex(FAN_MAP, 6, settings.fan)];
-  packet[12] = VANE[lookupByteMapIndex(VANE_MAP, 7, settings.vane)];
-  packet[13] = 0x00;
-  packet[14] = 0x00;
-  packet[15] = WIDEVANE[lookupByteMapIndex(WIDEVANE_MAP, 7, settings.wideVane)];
-
-  // pad the packet out 
-  for (int i = 0; i < 5; i++) {
-    packet[i + 16] = 0x00;
+  //preset all bytes to 0x00
+  for (int i = 0; i < 21; i++) {
+    packet[i + 8] = 0x00;
   }
-
+  if(settings.power != currentSettings.power) {
+    packet[8]  = POWER[lookupByteMapIndex(POWER_MAP, 2, settings.power)];
+    packet[6] += CONTROL_PACKET[0];
+  }
+  if(settings.mode!= currentSettings.mode) {
+    packet[9]  = MODE[lookupByteMapIndex(MODE_MAP, 5, settings.mode)];
+    packet[6] += CONTROL_PACKET[1];
+  }
+  if(settings.temperature!= currentSettings.temperature) {
+    packet[10] = TEMP[lookupByteMapIndex(TEMP_MAP, 16, settings.temperature)];
+    packet[6] += CONTROL_PACKET[2];
+  }
+  if(settings.fan!= currentSettings.fan) {
+    packet[11] = FAN[lookupByteMapIndex(FAN_MAP, 6, settings.fan)];
+    packet[6] += CONTROL_PACKET[3];
+  }
+  if(settings.vane!= currentSettings.vane) {
+    packet[12] = VANE[lookupByteMapIndex(VANE_MAP, 7, settings.vane)];
+    packet[6] += CONTROL_PACKET[4];
+  }
+  if(settings.wideVane!= currentSettings.wideVane) {
+    packet[15] = WIDEVANE[lookupByteMapIndex(WIDEVANE_MAP, 7, settings.wideVane)];
+    packet[6] += CONTROL_PACKET[5];
+  }
   // add the checksum
   byte chkSum = checkSum(packet, 21);
   packet[21] = chkSum;
