@@ -48,7 +48,7 @@ typedef uint8_t byte;
 struct heatpumpSettings {
   String power;
   String mode;
-  int temperature;
+  float temperature;
   String fan;
   String vane; //vertical vane, up/down
   String wideVane; //horizontal vane, left/right
@@ -65,7 +65,7 @@ class HeatPump
     static const int PACKET_TYPE_DEFAULT = 99;
 
     const byte CONNECT[8] = {0xfc, 0x5a, 0x01, 0x30, 0x02, 0xca, 0x01, 0xa8};
-    const byte HEADER[8]  = {0xfc, 0x41, 0x01, 0x30, 0x10, 0x01, 0x9f, 0x00};
+    const byte HEADER[8]  = {0xfc, 0x41, 0x01, 0x30, 0x10, 0x01, 0x00, 0x00};
     static const int CONNECT_LEN = 8;
     static const int HEADER_LEN  = 8;
 
@@ -82,6 +82,10 @@ class HeatPump
     const int RCVD_PKT_ROOM_TEMP      = 2;
     const int RCVD_PKT_UPDATE_SUCCESS = 3;
 
+    const byte CONTROL_PACKET_1[5] = {0x01, 0x02, 0x04, 0x08, 0x10};
+                                  //{"POWER","MODE","TEMP","FAN","VANE"};
+    const byte CONTROL_PACKET_2[1] = {0x01};
+                                  //{"WIDEVANE"};
     const byte POWER[2]          = {0x00, 0x01};
     const String POWER_MAP[2]    = {"OFF", "ON"};
     const byte MODE[5]           = {0x01,   0x02,  0x03, 0x07, 0x08};
@@ -103,11 +107,14 @@ class HeatPump
     heatpumpSettings currentSettings;
     heatpumpSettings wantedSettings;
   
-    int currentRoomTemp;
+    float currentRoomTemp;
              
     HardwareSerial * _HardSerial;
     unsigned int lastSend;
     bool infoMode;
+    bool autoUpdate;
+    bool firstRun;
+    bool tempMode; 
 
     String lookupByteMapValue(const String valuesMap[], const byte byteMap[], int len, byte byteValue);
     int    lookupByteMapValue(const int valuesMap[], const byte byteMap[], int len, byte byteValue);
@@ -135,6 +142,8 @@ class HeatPump
     void connect(HardwareSerial *serial);
     bool update();
     void sync(byte packetType = PACKET_TYPE_DEFAULT);
+    void enableAutoUpdate();
+    void disableAUtoUpdate();
     heatpumpSettings getSettings();
     void setSettings(heatpumpSettings settings);
     void setPowerSetting(bool setting);
@@ -144,14 +153,14 @@ class HeatPump
     String getModeSetting();
     void setModeSetting(String setting);
     int getTemperature();
-    void setTemperature(int setting);
+    void setTemperature(float setting);
     String getFanSpeed();
     void setFanSpeed(String setting);
     String getVaneSetting();
     void setVaneSetting(String setting);
     String getWideVaneSetting();
     void setWideVaneSetting(String setting);
-    int getRoomTemperature();
+    float getRoomTemperature();
     unsigned int FahrenheitToCelsius(unsigned int tempF);
     unsigned int CelsiusToFahrenheit(unsigned int tempC);
 

@@ -53,6 +53,9 @@ bool operator!(const heatpumpSettings& settings) {
 HeatPump::HeatPump() {
   lastSend = 0;
   infoMode = false;
+  autoUpdate = false;
+  firstRun = true;
+  tempMode = false;
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -95,7 +98,9 @@ bool HeatPump::update() {
 }
 
 void HeatPump::sync(byte packetType) {
-  if(canSend()) {
+  if(autoUpdate && !wantedSettings == false && wantedSettings != currentSettings && packetType == PACKET_TYPE_DEFAULT) {
+     update(); }
+  else if(canSend()) {
     byte packet[PACKET_LEN] = {};
     createInfoPacket(packet, packetType);
     writePacket(packet, PACKET_LEN);
@@ -104,6 +109,13 @@ void HeatPump::sync(byte packetType) {
   readPacket(); 
 }
 
+void HeatPump::enableAutoUpdate() {
+  autoUpdate = true;
+}
+
+void HeatPump::disableAUtoUpdate() {
+  autoUpdate = false;
+}
 
 heatpumpSettings HeatPump::getSettings() {
   return currentSettings;
@@ -146,8 +158,16 @@ int HeatPump::getTemperature() {
   return currentSettings.temperature;
 }
 
-void HeatPump::setTemperature(int setting) {
-  wantedSettings.temperature = lookupByteMapIndex(TEMP_MAP, 16, setting) > -1 ? setting : TEMP_MAP[0];
+void HeatPump::setTemperature(float setting) {
+  if(!tempMode){
+    wantedSettings.temperature = lookupByteMapIndex(TEMP_MAP, 16, setting) > -1 ? setting : TEMP_MAP[0];
+  }
+  else {
+    setting = setting * 2;
+    setting = round(setting);
+    setting = setting / 2;
+    wantedSettings.temperature = setting < 10 ? 10 : (setting > 31 ? 31 : setting);
+  }
 }
 
 String HeatPump::getFanSpeed() {
@@ -174,7 +194,7 @@ void HeatPump::setWideVaneSetting(String setting) {
   wantedSettings.wideVane = lookupByteMapIndex(WIDEVANE_MAP, 7, setting) > -1 ? setting : WIDEVANE_MAP[0];
 }
 
-int HeatPump::getRoomTemperature() {
+float HeatPump::getRoomTemperature() {
   return currentRoomTemp;
 }
 
@@ -203,16 +223,15 @@ void HeatPump::setRoomTempChangedCallback(ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE) 
 //#### WARNING, THE FOLLOWING METHOD CAN F--K YOUR HP UP, USE WISELY ####
 void HeatPump::sendCustomPacket(byte data[], int len) {
   while(!canSend()) { delay(10); }
-  len += 2;                          //+2, for FC and CHKSUM
-  byte packet[len];
+  byte packet[PACKET_LEN];
   packet[0] = 0xfc;
-  for (int i = 0; i < len-1; i++) {
-    packet[i+1] = data[i]; 
+  for (int i = 0; i < len; i++) {
+    packet[(i+1)] = data[i]; 
   }
-  byte chkSum = checkSum(packet, len-1);
-  packet[len] = chkSum;
+  byte chkSum = checkSum(packet, 21);
+  packet[21] = chkSum;
 
-  writePacket(packet, len);
+  writePacket(packet, PACKET_LEN);
   delay(1000);
 }
 
@@ -271,21 +290,39 @@ void HeatPump::createPacket(byte *packet, heatpumpSettings settings) {
   for (int i = 0; i < HEADER_LEN; i++) {
     packet[i] = HEADER[i];
   }
-
-  packet[8]  = POWER[lookupByteMapIndex(POWER_MAP, 2, settings.power)];
-  packet[9]  = MODE[lookupByteMapIndex(MODE_MAP, 5, settings.mode)];
-  packet[10] = TEMP[lookupByteMapIndex(TEMP_MAP, 16, settings.temperature)];
-  packet[11] = FAN[lookupByteMapIndex(FAN_MAP, 6, settings.fan)];
-  packet[12] = VANE[lookupByteMapIndex(VANE_MAP, 7, settings.vane)];
-  packet[13] = 0x00;
-  packet[14] = 0x00;
-  packet[15] = WIDEVANE[lookupByteMapIndex(WIDEVANE_MAP, 7, settings.wideVane)];
-
-  // pad the packet out 
-  for (int i = 0; i < 5; i++) {
-    packet[i + 16] = 0x00;
+  //preset all bytes to 0x00
+  for (int i = 0; i < 21; i++) {
+    packet[i + 8] = 0x00;
   }
-
+  if(settings.power != currentSettings.power) {
+    packet[8]  = POWER[lookupByteMapIndex(POWER_MAP, 2, settings.power)];
+    packet[6] += CONTROL_PACKET_1[0];
+  }
+  if(settings.mode!= currentSettings.mode) {
+    packet[9]  = MODE[lookupByteMapIndex(MODE_MAP, 5, settings.mode)];
+    packet[6] += CONTROL_PACKET_1[1];
+  }
+  if(!tempMode && settings.temperature!= currentSettings.temperature) {
+    packet[10] = TEMP[lookupByteMapIndex(TEMP_MAP, 16, settings.temperature)];
+    packet[6] += CONTROL_PACKET_1[2];
+  }
+  else if(tempMode && settings.temperature!= currentSettings.temperature) {
+    float temp = (settings.temperature * 2) + 128;
+    packet[19] = (int)temp;
+    packet[6] += CONTROL_PACKET_1[2];
+  }
+  if(settings.fan!= currentSettings.fan) {
+    packet[11] = FAN[lookupByteMapIndex(FAN_MAP, 6, settings.fan)];
+    packet[6] += CONTROL_PACKET_1[3];
+  }
+  if(settings.vane!= currentSettings.vane) {
+    packet[12] = VANE[lookupByteMapIndex(VANE_MAP, 7, settings.vane)];
+    packet[6] += CONTROL_PACKET_1[4];
+  }
+  if(settings.wideVane!= currentSettings.wideVane) {
+    packet[18] = WIDEVANE[lookupByteMapIndex(WIDEVANE_MAP, 7, settings.wideVane)];
+    packet[7] += CONTROL_PACKET_2[0];
+  }
   // add the checksum
   byte chkSum = checkSum(packet, 21);
   packet[21] = chkSum;
@@ -391,7 +428,15 @@ int HeatPump::readPacket() {
           heatpumpSettings receivedSettings;
           receivedSettings.power       = lookupByteMapValue(POWER_MAP, POWER, 2, data[3]);
           receivedSettings.mode        = lookupByteMapValue(MODE_MAP, MODE, 5, data[4]);
-          receivedSettings.temperature = lookupByteMapValue(TEMP_MAP, TEMP, 16, data[5]);
+          if(data[11] != 0x00) {
+            int temp = data[11];
+            temp -= 128;
+            receivedSettings.temperature = (float)temp / 2;
+            tempMode =  true;
+          }
+          else {
+            receivedSettings.temperature = lookupByteMapValue(TEMP_MAP, TEMP, 16, data[5]);
+          }
           receivedSettings.fan         = lookupByteMapValue(FAN_MAP, FAN, 6, data[6]);
           receivedSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
           receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);   
@@ -404,14 +449,23 @@ int HeatPump::readPacket() {
           }
 
           // if wantedSettings is null (indicating that this is the first time we have synced with the heatpump, set it to receivedSettings
-          if(!wantedSettings) {
-            wantedSettings = receivedSettings;
+          //if(!wantedSettings) {
+          if(firstRun) {
+            wantedSettings = currentSettings;
+            firstRun = false;
           }
 
           return RCVD_PKT_SETTINGS;
         } else if(header[1] == 0x62 && data[0] == 0x03) { //Room temperature reading
-          int receivedRoomTemp = lookupByteMapValue(ROOM_TEMP_MAP, ROOM_TEMP, 32, data[3]);
-
+          float receivedRoomTemp;
+          if(data[6] != 0x00) {
+	    int temp = data[6];
+            temp -= 128;
+            receivedRoomTemp = (float)temp / 2;
+          } 
+          else {
+            receivedRoomTemp = lookupByteMapValue(ROOM_TEMP_MAP, ROOM_TEMP, 32, data[3]);
+          }
           if(roomTempChangedCallback && currentRoomTemp != receivedRoomTemp) {
             currentRoomTemp = receivedRoomTemp;
             roomTempChangedCallback(currentRoomTemp);
