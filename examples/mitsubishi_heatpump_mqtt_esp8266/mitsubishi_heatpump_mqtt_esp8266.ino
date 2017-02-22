@@ -65,7 +65,7 @@ void hpSettingsChanged() {
     mqtt_client.publish(heatpump_topic, buffer, retain);
 }
 
-void sendCurrentRoomTemperature(unsigned int currentRoomTemperature) {
+void sendCurrentRoomTemperature(int currentRoomTemperature) {
     const size_t bufferSize = JSON_OBJECT_SIZE(1);
     DynamicJsonBuffer jsonBuffer(bufferSize);
     
@@ -153,12 +153,27 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       String wideVane = root["wideVane"];
       hp.setWideVaneSetting(wideVane);
     }
-    
-    bool result = hp.update();
+
+    if (root.containsKey("custom")) {
+      String custom = root["custom"];
+      custom.toUpperCase();
+      char chars[20];
+      custom.toCharArray(chars,20);
+      byte bytes[20];
+      for(int i = 0; i < 20; i++)
+      {
+        bytes[i] = getVal(chars[i]);
+      }  
+      hp.sendCustomPacket(bytes,20);
+    }   
+    else { 
+      bool result = hp.update();
   
-    if(!result) {
-      mqtt_client.publish(heatpump_debug_topic, "heatpump: update() failed");
+      if(!result) {
+        mqtt_client.publish(heatpump_debug_topic, "heatpump: update() failed");
+      }
     }
+    
   } else if(strcmp(topic, heatpump_debug_set_topic) == 0) { //if the incoming message is on the heatpump_debug_set_topic topic...
     if(strcmp(message, "on") == 0) {
       _debugMode = true;
@@ -170,6 +185,14 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   } else {
     mqtt_client.publish(heatpump_debug_topic, strcat("heatpump: wrong mqtt topic: ", topic));
   }
+}
+
+byte getVal(char c)
+{
+   if(c >= '0' && c <= '9')
+     return (byte)(c - '0');
+   else
+     return (byte)(c-'A'+10);
 }
 
 void mqttConnect() {
@@ -203,6 +226,5 @@ void loop() {
 
   mqtt_client.loop();
 }
-
 
 
