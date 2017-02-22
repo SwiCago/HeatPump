@@ -48,7 +48,7 @@ typedef uint8_t byte;
 struct heatpumpSettings {
   String power;
   String mode;
-  int temperature;
+  float temperature;
   String fan;
   String vane; //vertical vane, up/down
   String wideVane; //horizontal vane, left/right
@@ -105,12 +105,14 @@ class HeatPump
     heatpumpSettings currentSettings;
     heatpumpSettings wantedSettings;
   
-    int currentRoomTemp;
+    float currentRoomTemp;
              
     HardwareSerial * _HardSerial;
     unsigned int lastSend;
-    bool infoMode;    bool autoUpdate;
-    bool firstRun; 
+    bool infoMode;
+    bool autoUpdate;
+    bool firstRun;
+    bool tempMode; 
 
     String lookupByteMapValue(const String valuesMap[], const byte byteMap[], int len, byte byteValue);
     int    lookupByteMapValue(const int valuesMap[], const byte byteMap[], int len, byte byteValue);
@@ -149,14 +151,14 @@ class HeatPump
     String getModeSetting();
     void setModeSetting(String setting);
     int getTemperature();
-    void setTemperature(int setting);
+    void setTemperature(float setting);
     String getFanSpeed();
     void setFanSpeed(String setting);
     String getVaneSetting();
     void setVaneSetting(String setting);
     String getWideVaneSetting();
     void setWideVaneSetting(String setting);
-    int getRoomTemperature();
+    float getRoomTemperature();
     unsigned int FahrenheitToCelsius(unsigned int tempF);
     unsigned int CelsiusToFahrenheit(unsigned int tempC);
 

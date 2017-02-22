@@ -55,6 +55,7 @@ HeatPump::HeatPump() {
   infoMode = false;
   autoUpdate = false;
   firstRun = true;
+  tempMode = false;
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -157,8 +158,16 @@ int HeatPump::getTemperature() {
   return currentSettings.temperature;
 }
 
-void HeatPump::setTemperature(int setting) {
-  wantedSettings.temperature = lookupByteMapIndex(TEMP_MAP, 16, setting) > -1 ? setting : TEMP_MAP[0];
+void HeatPump::setTemperature(float setting) {
+  if(!tempMode){
+    wantedSettings.temperature = lookupByteMapIndex(TEMP_MAP, 16, setting) > -1 ? setting : TEMP_MAP[0];
+  }
+  else {
+    setting = setting * 2;
+    setting = round(setting);
+    setting = setting / 2;
+    wantedSettings.temperature = setting < 10 ? 10 : (setting > 31 ? 31 : setting);
+  }
 }
 
 String HeatPump::getFanSpeed() {
@@ -185,7 +194,7 @@ void HeatPump::setWideVaneSetting(String setting) {
   wantedSettings.wideVane = lookupByteMapIndex(WIDEVANE_MAP, 7, setting) > -1 ? setting : WIDEVANE_MAP[0];
 }
 
-int HeatPump::getRoomTemperature() {
+float HeatPump::getRoomTemperature() {
   return currentRoomTemp;
 }
 
@@ -294,8 +303,13 @@ void HeatPump::createPacket(byte *packet, heatpumpSettings settings) {
     packet[9]  = MODE[lookupByteMapIndex(MODE_MAP, 5, settings.mode)];
     packet[6] += CONTROL_PACKET[1];
   }
-  if(settings.temperature!= currentSettings.temperature) {
+  if(!tempMode && settings.temperature!= currentSettings.temperature) {
     packet[10] = TEMP[lookupByteMapIndex(TEMP_MAP, 16, settings.temperature)];
+    packet[6] += CONTROL_PACKET[2];
+  }
+  else if(tempMode && settings.temperature!= currentSettings.temperature) {
+    float temp = (settings.temperature * 2) + 128;
+    packet[19] = (int)temp;
     packet[6] += CONTROL_PACKET[2];
   }
   if(settings.fan!= currentSettings.fan) {
@@ -415,7 +429,15 @@ int HeatPump::readPacket() {
           heatpumpSettings receivedSettings;
           receivedSettings.power       = lookupByteMapValue(POWER_MAP, POWER, 2, data[3]);
           receivedSettings.mode        = lookupByteMapValue(MODE_MAP, MODE, 5, data[4]);
-          receivedSettings.temperature = lookupByteMapValue(TEMP_MAP, TEMP, 16, data[5]);
+          if(data[11] != 0x00) {
+            int temp = data[11];
+            temp -= 128;
+            receivedSettings.temperature = (float)temp / 2;
+            tempMode =  true;
+          }
+          else {
+            receivedSettings.temperature = lookupByteMapValue(TEMP_MAP, TEMP, 16, data[5]);
+          }
           receivedSettings.fan         = lookupByteMapValue(FAN_MAP, FAN, 6, data[6]);
           receivedSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
           receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);   
@@ -436,8 +458,15 @@ int HeatPump::readPacket() {
 
           return RCVD_PKT_SETTINGS;
         } else if(header[1] == 0x62 && data[0] == 0x03) { //Room temperature reading
-          int receivedRoomTemp = lookupByteMapValue(ROOM_TEMP_MAP, ROOM_TEMP, 32, data[3]);
-
+          float receivedRoomTemp;
+          if(data[6] != 0x00) {
+	    int temp = data[6];
+            temp -= 128;
+            receivedRoomTemp = (float)temp / 2;
+          } 
+          else {
+            receivedRoomTemp = lookupByteMapValue(ROOM_TEMP_MAP, ROOM_TEMP, 32, data[3]);
+          }
           if(roomTempChangedCallback && currentRoomTemp != receivedRoomTemp) {
             currentRoomTemp = receivedRoomTemp;
             roomTempChangedCallback(currentRoomTemp);

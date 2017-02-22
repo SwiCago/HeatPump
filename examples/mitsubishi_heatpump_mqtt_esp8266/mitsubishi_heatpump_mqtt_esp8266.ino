@@ -65,7 +65,7 @@ void hpSettingsChanged() {
     mqtt_client.publish(heatpump_topic, buffer, retain);
 }
 
-void sendCurrentRoomTemperature(int currentRoomTemperature) {
+void sendCurrentRoomTemperature(float currentRoomTemperature) {
     const size_t bufferSize = JSON_OBJECT_SIZE(1);
     DynamicJsonBuffer jsonBuffer(bufferSize);
     
