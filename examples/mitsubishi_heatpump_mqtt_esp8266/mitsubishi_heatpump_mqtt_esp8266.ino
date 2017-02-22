@@ -156,14 +156,25 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
     if (root.containsKey("custom")) {
       String custom = root["custom"];
-      custom.toUpperCase();
-      char chars[20];
-      custom.toCharArray(chars,20);
+      
+      char buf[custom.length()];
+      custom.toCharArray(buf, custom.length());
+
       byte bytes[20];
-      for(int i = 0; i < 20; i++)
+      int i = 0;
+      
+      char * pch;
+      pch = strtok(buf," ");
+      while (pch != NULL)
       {
-        bytes[i] = getVal(chars[i]);
-      }  
+        bytes[i] = strtol(pch, NULL, 16);
+        pch = strtok(NULL, " ");
+        i++;
+      }
+
+      // dump the packet so we can see what it is. handy because you can run the code without connecting the ESP to the heatpump, and test sending custom packets
+      hpPacketDebug(bytes, 20, "customPacket");
+
       hp.sendCustomPacket(bytes,20);
     }   
     else { 

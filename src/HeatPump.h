@@ -82,8 +82,10 @@ class HeatPump
     const int RCVD_PKT_ROOM_TEMP      = 2;
     const int RCVD_PKT_UPDATE_SUCCESS = 3;
 
-    const byte CONTROL_PACKET[6] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x80};
-                                  //"POWER","MODE","TEMP","FAN","WANE","WIDEVANE"};
+    const byte CONTROL_PACKET_1[5] = {0x01, 0x02, 0x04, 0x08, 0x10};
+                                  //{"POWER","MODE","TEMP","FAN","VANE"};
+    const byte CONTROL_PACKET_2[1] = {0x01};
+                                  //{"WIDEVANE"};
     const byte POWER[2]          = {0x00, 0x01};
     const String POWER_MAP[2]    = {"OFF", "ON"};
     const byte MODE[5]           = {0x01,   0x02,  0x03, 0x07, 0x08};
