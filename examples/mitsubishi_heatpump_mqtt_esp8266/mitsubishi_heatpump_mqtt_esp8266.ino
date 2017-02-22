@@ -157,12 +157,11 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     if (root.containsKey("custom")) {
       String custom = root["custom"];
       custom.toUpperCase();
-      char chars[20];
-      custom.toCharArray(chars,20);
+      char chars[40];
+      custom.toCharArray(chars,40);
       byte bytes[20];
-      for(int i = 0; i < 20; i++)
-      {
-        bytes[i] = getVal(chars[i]);
+      for(int i = 0; i < 40; i+=2) {
+        bytes[i] = getVal(chars[i+1])  + (getVal(chars[i]) << 4);
       }  
       hp.sendCustomPacket(bytes,20);
     }   
