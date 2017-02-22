@@ -223,16 +223,15 @@ void HeatPump::setRoomTempChangedCallback(ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE) 
 //#### WARNING, THE FOLLOWING METHOD CAN F--K YOUR HP UP, USE WISELY ####
 void HeatPump::sendCustomPacket(byte data[], int len) {
   while(!canSend()) { delay(10); }
-  len += 2;                          //+2, for FC and CHKSUM
-  byte packet[len];
+  byte packet[PACKET_LEN];
   packet[0] = 0xfc;
-  for (int i = 0; i < len-1; i++) {
-    packet[i+1] = data[i]; 
+  for (int i = 0; i < len; i++) {
+    packet[(i+1)] = data[i]; 
   }
-  byte chkSum = checkSum(packet, len-1);
-  packet[len] = chkSum;
+  byte chkSum = checkSum(packet, 21);
+  packet[21] = chkSum;
 
-  writePacket(packet, len);
+  writePacket(packet, PACKET_LEN);
   delay(1000);
 }
 
@@ -297,32 +296,32 @@ void HeatPump::createPacket(byte *packet, heatpumpSettings settings) {
   }
   if(settings.power != currentSettings.power) {
     packet[8]  = POWER[lookupByteMapIndex(POWER_MAP, 2, settings.power)];
-    packet[6] += CONTROL_PACKET[0];
+    packet[6] += CONTROL_PACKET_1[0];
   }
   if(settings.mode!= currentSettings.mode) {
     packet[9]  = MODE[lookupByteMapIndex(MODE_MAP, 5, settings.mode)];
-    packet[6] += CONTROL_PACKET[1];
+    packet[6] += CONTROL_PACKET_1[1];
   }
   if(!tempMode && settings.temperature!= currentSettings.temperature) {
     packet[10] = TEMP[lookupByteMapIndex(TEMP_MAP, 16, settings.temperature)];
-    packet[6] += CONTROL_PACKET[2];
+    packet[6] += CONTROL_PACKET_1[2];
   }
   else if(tempMode && settings.temperature!= currentSettings.temperature) {
     float temp = (settings.temperature * 2) + 128;
     packet[19] = (int)temp;
-    packet[6] += CONTROL_PACKET[2];
+    packet[6] += CONTROL_PACKET_1[2];
   }
   if(settings.fan!= currentSettings.fan) {
     packet[11] = FAN[lookupByteMapIndex(FAN_MAP, 6, settings.fan)];
-    packet[6] += CONTROL_PACKET[3];
+    packet[6] += CONTROL_PACKET_1[3];
   }
   if(settings.vane!= currentSettings.vane) {
     packet[12] = VANE[lookupByteMapIndex(VANE_MAP, 7, settings.vane)];
-    packet[6] += CONTROL_PACKET[4];
+    packet[6] += CONTROL_PACKET_1[4];
   }
   if(settings.wideVane!= currentSettings.wideVane) {
-    packet[15] = WIDEVANE[lookupByteMapIndex(WIDEVANE_MAP, 7, settings.wideVane)];
-    packet[6] += CONTROL_PACKET[5];
+    packet[18] = WIDEVANE[lookupByteMapIndex(WIDEVANE_MAP, 7, settings.wideVane)];
+    packet[7] += CONTROL_PACKET_2[0];
   }
   // add the checksum
   byte chkSum = checkSum(packet, 21);
