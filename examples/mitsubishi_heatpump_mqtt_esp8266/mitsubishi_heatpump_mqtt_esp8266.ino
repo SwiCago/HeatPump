@@ -155,6 +155,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     }
 
     if (root.containsKey("custom")) {
+      String custom = root["custom"];
       custom.toUpperCase();
       char chars[40];
       custom.toCharArray(chars,40);
