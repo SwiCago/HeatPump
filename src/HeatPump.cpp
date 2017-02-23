@@ -98,8 +98,9 @@ bool HeatPump::update() {
 }
 
 void HeatPump::sync(byte packetType) {
-  if(autoUpdate && !wantedSettings == false && wantedSettings != currentSettings && packetType == PACKET_TYPE_DEFAULT) {
-     update(); }
+  if(autoUpdate && !firstRun && wantedSettings != currentSettings && packetType == PACKET_TYPE_DEFAULT) {
+     update(); 
+  }
   else if(canSend()) {
     byte packet[PACKET_LEN] = {};
     createInfoPacket(packet, packetType);
@@ -459,7 +460,7 @@ int HeatPump::readPacket() {
         } else if(header[1] == 0x62 && data[0] == 0x03) { //Room temperature reading
           float receivedRoomTemp;
           if(data[6] != 0x00) {
-	    int temp = data[6];
+            int temp = data[6];
             temp -= 128;
             receivedRoomTemp = (float)temp / 2;
           } 
