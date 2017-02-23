@@ -7,8 +7,9 @@
 const char* ssid = "esp8266";
 
 const char* html = "<html>\n<head>\n<meta name='viewport' content='width=device-width, initial-scale=2'/>\n"
+                   "<meta http-equiv='refresh' content='_RATE_; url=/'/>\n"
                    "<style></style>\n"
-                   "<body><h3>Heat Pump Demo</h3>TEMP: _ROOMTEMP_\n<form>\n<table>\n"
+                   "<body><h3>Heat Pump Demo</h3>TEMP: _ROOMTEMP_\n&deg;C<form>\n<table>\n"
                    "<tr>\n<td>Power:</td>\n<td>\n_POWER_</td>\n</tr>\n"
                    "<tr>\n<td>Mode:</td>\n<td>\n_MODE_</td>\n</tr>\n"
                    "<tr>\n<td>Temp:</td>\n<td>\n_TEMP_</td>\n</tr>"
@@ -82,8 +83,9 @@ void handleNotFound() {
 }
 
 void handle_root() {
-  change_states();
+  int rate = change_states() ? 0 : 60;
   String toSend = html;
+  toSend.replace("_RATE_", String(rate));
   String power[2] = {"OFF", "ON"}; 
   toSend.replace("_POWER_", createOptionSelector("POWER", power, 2, hp.getPowerSetting()));
   String mode[5] = {"HEAT", "DRY", "COOL", "FAN", "AUTO"};
@@ -96,34 +98,42 @@ void handle_root() {
   toSend.replace("_VANE_", createOptionSelector("VANE", vane, 7, hp.getVaneSetting()));
   String widevane[7] = {"<<", "<", "|", ">", ">>", "<>", "SWING"}; 
   toSend.replace("_WVANE_", createOptionSelector("WIDEVANE", widevane, 7, hp.getWideVaneSetting()));
-  toSend.replace("_ROOMTEMP_", String(hp.getRoomTemperature()) + "°C");
+  toSend.replace("_ROOMTEMP_", String(hp.getRoomTemperature()));
   server.send(200, "text/html", toSend);
   delay(100);
 }
 
-void change_states() {
+bool change_states() {
+  bool updated = false;
   if (server.hasArg("CONNECT")) {
     hp.connect(&Serial);
   }
   else {
     if (server.hasArg("POWER")) {
       hp.setPowerSetting(server.arg("POWER"));
+      updated = true;
     }
     if (server.hasArg("MODE")) {
       hp.setModeSetting(server.arg("MODE"));
+      updated = true;
     }
     if (server.hasArg("TEMP")) {
       hp.setTemperature(server.arg("TEMP").toInt());
+      updated = true;
     }
     if (server.hasArg("FAN")) {
       hp.setFanSpeed(server.arg("FAN"));
+      updated = true;
     }
     if (server.hasArg("VANE")) {
       hp.setVaneSetting(server.arg("VANE"));
+      updated = true;
     }
     if (server.hasArg("DIR")) {
       hp.setWideVaneSetting(server.arg("WIDEVANE"));
+      updated = true;
     }
     hp.update(); 
   }
+  return updated;
 }
