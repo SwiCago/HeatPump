@@ -10,10 +10,12 @@
 WiFiClient espClient;
 PubSubClient mqtt_client(espClient);
 HeatPump hp;
+uint lastTempSend;
 
 // debug mode, when true, will send all packets received from the heatpump to topic heatpump_debug_topic
 // this can also be set by sending "on" to heatpump_debug_set_topic
 bool _debugMode = true;
+
 
 void setup() {
   pinMode(redLedPin, OUTPUT);
@@ -41,6 +43,8 @@ void setup() {
   hp.setRoomTempChangedCallback(sendCurrentRoomTemperature);
   hp.setPacketCallback(hpPacketDebug);
   hp.connect(&Serial);
+
+  lastTempSend = millis();
 }
 
 void hpSettingsChanged() {
@@ -156,23 +160,27 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
     if (root.containsKey("custom")) {
       String custom = root["custom"];
- 
-      char buf[custom.length()];
-      custom.toCharArray(buf, custom.length()); 
-      byte bytes[20]; 
-      int i = 0; 
-      char * pch; 
-                  
-      pch = strtok(buf," "); 
-      while (pch != NULL) {
-        bytes[i] = strtol(pch, NULL, 16); 
-        pch = strtok(NULL, " "); 
-        i++; 
-      }
-      // dump the packet so we can see what it is. handy because you can run the code without connecting the ESP to the heatpump, and test sending custom packets
-      hpPacketDebug(bytes, 20, "customPacket");
+      
+      // copy custom packet to char array
+      char buffer[(custom.length()+1)]; // +1 for the NULL at the end
+      custom.toCharArray(buffer, (custom.length()+1)); 
+      
+      byte bytes[20]; // max custom packet bytes is 20
+      int byteCount = 0; 
+      char *nextByte; 
 
-      hp.sendCustomPacket(bytes,20);
+      // loop over the byte string, breaking it up by spaces (or at the end of the line - \n)
+      nextByte = strtok(buffer, " "); 
+      while (nextByte != NULL && byteCount < 20) {
+        bytes[byteCount] = strtol(nextByte, NULL, 16); // convert from hex string
+        nextByte = strtok(NULL, "   "); 
+        byteCount++; 
+      }
+      
+      // dump the packet so we can see what it is. handy because you can run the code without connecting the ESP to the heatpump, and test sending custom packets
+      hpPacketDebug(bytes, byteCount, "customPacket");
+
+      hp.sendCustomPacket(bytes, byteCount);
     }   
     else { 
       bool result = hp.update();
@@ -195,14 +203,6 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   }
 }
 
-byte getVal(char c)
-{
-   if(c >= '0' && c <= '9')
-     return (byte)(c - '0');
-   else
-     return (byte)(c-'A'+10);
-}
-
 void mqttConnect() {
   // Loop until we're reconnected
   while (!mqtt_client.connected()) {
@@ -217,9 +217,6 @@ void mqttConnect() {
   }
 }
 
-
-uint lastTempSend = 0;
-
 void loop() {
   if (!mqtt_client.connected()) {
     mqttConnect();
@@ -227,7 +224,7 @@ void loop() {
 
   hp.sync();
   
-  if(!lastTempSend || millis() > (lastTempSend + SEND_ROOM_TEMP_INTERVAL_MS)) { // only send the temperature every 60s
+  if(millis() > (lastTempSend + SEND_ROOM_TEMP_INTERVAL_MS)) { // only send the temperature every 60s
     sendCurrentRoomTemperature(hp.getRoomTemperature());
     lastTempSend = millis();
   }
