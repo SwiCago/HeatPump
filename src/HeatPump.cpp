@@ -222,17 +222,28 @@ void HeatPump::setRoomTempChangedCallback(ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE) 
 }
 
 //#### WARNING, THE FOLLOWING METHOD CAN F--K YOUR HP UP, USE WISELY ####
-void HeatPump::sendCustomPacket(byte data[], int len) {
+void HeatPump::sendCustomPacket(byte data[], int packetLength) {
   while(!canSend()) { delay(10); }
-  byte packet[PACKET_LEN];
-  packet[0] = 0xfc;
-  for (int i = 0; i < len; i++) {
+
+  if (packetLength == (PACKET_LEN-2)) { // check to see if it's a full packet (it comes in -2, as we add the 0xfc header and checksum)
+    packetLength += 2; // +2 for 0xfc header and checksum
+  } else {
+    packetLength += 1; // +1 for 0xfc header (no checksum byte if not a full packet)
+  }
+
+  byte packet[packetLength];
+  packet[0] = HEADER[0]; // add first header byte
+
+  for (int i = 0; i < packetLength; i++) {
     packet[(i+1)] = data[i]; 
   }
-  byte chkSum = checkSum(packet, 21);
-  packet[21] = chkSum;
 
-  writePacket(packet, PACKET_LEN);
+  if (packetLength == PACKET_LEN) { // only add the checksum if it's a full sized packet. smaller packets (like CONNECT) don't have the checksum
+    byte chkSum = checkSum(packet, (packetLength-1));
+    packet[(packetLength-1)] = chkSum;
+  }
+
+  writePacket(packet, packetLength);
   delay(1000);
 }
 
