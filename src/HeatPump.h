@@ -52,6 +52,7 @@ struct heatpumpSettings {
   String fan;
   String vane; //vertical vane, up/down
   String wideVane; //horizontal vane, left/right
+  bool iSee;   //iSee sensor, at the moment can only detect it, not set it
 };
 
 bool operator==(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
@@ -160,6 +161,7 @@ class HeatPump
     void setVaneSetting(String setting);
     String getWideVaneSetting();
     void setWideVaneSetting(String setting);
+    bool getIseeBool();
     float getRoomTemperature();
     unsigned int FahrenheitToCelsius(unsigned int tempF);
     unsigned int CelsiusToFahrenheit(unsigned int tempC);
