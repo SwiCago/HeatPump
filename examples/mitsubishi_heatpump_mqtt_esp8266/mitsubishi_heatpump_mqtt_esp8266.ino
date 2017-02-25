@@ -61,6 +61,7 @@ void hpSettingsChanged() {
     root["fan"]         = currentSettings.fan;
     root["vane"]        = currentSettings.vane;
     root["wideVane"]    = currentSettings.wideVane;
+    root["iSee"]        = currentSettings.iSee;
 
     char buffer[512];
     root.printTo(buffer, sizeof(buffer));
@@ -231,4 +232,3 @@ void loop() {
 
   mqtt_client.loop();
 }
-

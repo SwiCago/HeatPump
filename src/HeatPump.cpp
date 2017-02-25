@@ -26,7 +26,8 @@ bool operator==(const heatpumpSettings& lhs, const heatpumpSettings& rhs) {
          lhs.temperature == rhs.temperature && 
          lhs.fan == rhs.fan &&
          lhs.vane == rhs.vane &&
-         lhs.wideVane == rhs.wideVane;
+         lhs.wideVane == rhs.wideVane &&
+         lhs.iSee == rhs.iSee; 
 }
 
 bool operator!=(const heatpumpSettings& lhs, const heatpumpSettings& rhs) {
@@ -35,7 +36,8 @@ bool operator!=(const heatpumpSettings& lhs, const heatpumpSettings& rhs) {
          lhs.temperature != rhs.temperature || 
          lhs.fan != rhs.fan ||
          lhs.vane != rhs.vane ||
-         lhs.wideVane != rhs.wideVane;
+         lhs.wideVane != rhs.wideVane ||
+         lhs.iSee != rhs.iSee;
 }
 
 bool operator!(const heatpumpSettings& settings) {
@@ -44,7 +46,8 @@ bool operator!(const heatpumpSettings& settings) {
          !settings.temperature && 
          !settings.fan &&
          !settings.vane &&
-         !settings.wideVane;
+         !settings.wideVane &&
+         !settings.iSee;
 }
 
 
@@ -193,6 +196,10 @@ String HeatPump::getWideVaneSetting() {
 
 void HeatPump::setWideVaneSetting(String setting) {
   wantedSettings.wideVane = lookupByteMapIndex(WIDEVANE_MAP, 7, setting) > -1 ? setting : WIDEVANE_MAP[0];
+}
+
+bool HeatPump::getIseeBool() { //no setter yet
+  return currentSettings.iSee;
 }
 
 float HeatPump::getRoomTemperature() {
@@ -439,7 +446,8 @@ int HeatPump::readPacket() {
         if(header[1] == 0x62 && data[0] == 0x02) { // setting information
           heatpumpSettings receivedSettings;
           receivedSettings.power       = lookupByteMapValue(POWER_MAP, POWER, 2, data[3]);
-          receivedSettings.mode        = lookupByteMapValue(MODE_MAP, MODE, 5, data[4]);
+          receivedSettings.iSee = data[4] > 0x08 ? true : false;
+          receivedSettings.mode = lookupByteMapValue(MODE_MAP, MODE, 5, receivedSettings.iSee  ? (data[4] - 0x08) : data[4]);
           if(data[11] != 0x00) {
             int temp = data[11];
             temp -= 128;
