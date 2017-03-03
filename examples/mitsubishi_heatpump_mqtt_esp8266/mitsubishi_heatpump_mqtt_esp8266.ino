@@ -42,8 +42,7 @@ void setup() {
   hp.setSettingsChangedCallback(hpSettingsChanged);
   hp.setRoomTempChangedCallback(sendCurrentRoomTemperature);
   hp.setPacketCallback(hpPacketDebug);
-  hp.connect(&Serial);
-
+  while(!hp.connect(&Serial)) { }
   lastTempSend = millis();
 }
 

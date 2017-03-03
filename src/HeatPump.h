@@ -53,6 +53,7 @@ struct heatpumpSettings {
   String vane; //vertical vane, up/down
   String wideVane; //horizontal vane, left/right
   bool iSee;   //iSee sensor, at the moment can only detect it, not set it
+  bool connected;
 };
 
 bool operator==(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
@@ -82,6 +83,7 @@ class HeatPump
     const int RCVD_PKT_SETTINGS       = 1;
     const int RCVD_PKT_ROOM_TEMP      = 2;
     const int RCVD_PKT_UPDATE_SUCCESS = 3;
+    const int RCVD_PKT_CONNECT_SUCCESS = 4;
 
     const byte CONTROL_PACKET_1[5] = {0x01, 0x02, 0x04, 0x08, 0x10};
                                   //{"POWER","MODE","TEMP","FAN","VANE"};
@@ -112,6 +114,8 @@ class HeatPump
              
     HardwareSerial * _HardSerial;
     unsigned int lastSend;
+    unsigned int lastRecv;
+    bool connected = false;
     bool infoMode;
     bool autoUpdate;
     bool firstRun;
@@ -140,7 +144,7 @@ class HeatPump
     const int RQST_PKT_ROOM_TEMP = 1;
 
     HeatPump();
-    void connect(HardwareSerial *serial);
+    bool connect(HardwareSerial *serial);
     bool update();
     void sync(byte packetType = PACKET_TYPE_DEFAULT);
     void enableAutoUpdate();
