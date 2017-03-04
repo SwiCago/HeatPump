@@ -27,9 +27,9 @@ void setup() {
   digitalWrite(redLedPin, HIGH);
   pinMode(blueLedPin, OUTPUT);
   digitalWrite(blueLedPin, HIGH);
-  
+
   WiFi.begin(ssid, password);
-  
+
   while (WiFi.status() != WL_CONNECTED) {
     // wait 500ms, flashing the blue LED to indicate WiFi connecting...
     digitalWrite(blueLedPin, LOW);
@@ -45,7 +45,7 @@ void setup() {
 
   // connect to the heatpump. Callbacks first so that the hpPacketDebug callback is available for connect()
   hp.setSettingsChangedCallback(hpSettingsChanged);
-  hp.setRoomTempChangedCallback(sendCurrentRoomTemperature);
+  hp.setStatusChangedCallback(hpStatusChanged);
   hp.setPacketCallback(hpPacketDebug);
 
   #ifdef OTA
@@ -53,49 +53,71 @@ void setup() {
   #endif
   
   while(!hp.connect(&Serial)) { }
+
   lastTempSend = millis();
 }
 
 void hpSettingsChanged() {
-    const size_t bufferSize = JSON_OBJECT_SIZE(6);
-    DynamicJsonBuffer jsonBuffer(bufferSize);
-    
-    JsonObject& root = jsonBuffer.createObject();
-  
-    heatpumpSettings currentSettings = hp.getSettings();
-    
-    root["power"]       = currentSettings.power;
-    root["mode"]        = currentSettings.mode;
-    root["temperature"] = currentSettings.temperature;
-    root["fan"]         = currentSettings.fan;
-    root["vane"]        = currentSettings.vane;
-    root["wideVane"]    = currentSettings.wideVane;
-    root["iSee"]        = currentSettings.iSee;
+  const size_t bufferSize = JSON_OBJECT_SIZE(6);
+  DynamicJsonBuffer jsonBuffer(bufferSize);
 
-    char buffer[512];
-    root.printTo(buffer, sizeof(buffer));
+  JsonObject& root = jsonBuffer.createObject();
 
-    bool retain = true;
-    mqtt_client.publish(heatpump_topic, buffer, retain);
+  heatpumpSettings currentSettings = hp.getSettings();
+
+  root["power"]       = currentSettings.power;
+  root["mode"]        = currentSettings.mode;
+  root["temperature"] = currentSettings.temperature;
+  root["fan"]         = currentSettings.fan;
+  root["vane"]        = currentSettings.vane;
+  root["wideVane"]    = currentSettings.wideVane;
+
+  char buffer[512];
+  root.printTo(buffer, sizeof(buffer));
+
+  bool retain = true;
+  if(!mqtt_client.publish(heatpump_topic, buffer, retain)) {
+    mqtt_client.publish(heatpump_debug_topic, "failed to publish to heatpump topic");
+  }
 }
 
-void sendCurrentRoomTemperature(float currentRoomTemperature) {
-    const size_t bufferSize = JSON_OBJECT_SIZE(1);
-    DynamicJsonBuffer jsonBuffer(bufferSize);
-    
-    JsonObject& root = jsonBuffer.createObject();
+void hpStatusChanged(heatpumpStatus currentStatus) {
+  // send room temp and operating info
+  const size_t bufferSizeInfo = JSON_OBJECT_SIZE(2);
+  DynamicJsonBuffer jsonBufferInfo(bufferSizeInfo);
   
-    root["roomTemperature"] = currentRoomTemperature;
+  JsonObject& rootInfo = jsonBufferInfo.createObject();
+  rootInfo["roomTemperature"] = currentStatus.roomTemperature;
+  rootInfo["operating"]       = currentStatus.operating;
+  
+  char bufferInfo[512];
+  rootInfo.printTo(bufferInfo, sizeof(bufferInfo));
 
-    char buffer[512];
-    root.printTo(buffer, sizeof(buffer));
+  if(!mqtt_client.publish(heatpump_status_topic, bufferInfo, true)) {
+    mqtt_client.publish(heatpump_debug_topic, "failed to publish to room temp and operation status to heatpump/status topic");
+  }
 
-    bool retain = true;
-    mqtt_client.publish(heatpump_temperature_topic, buffer, retain);
+  // send the timer info
+  const size_t bufferSizeTimers = JSON_OBJECT_SIZE(5);
+  DynamicJsonBuffer jsonBufferTimers(bufferSizeTimers);
+  
+  JsonObject& rootTimers = jsonBufferTimers.createObject();
+  rootTimers["mode"]          = currentStatus.timers.mode;
+  rootTimers["onMins"]        = currentStatus.timers.onMinutesSet;
+  rootTimers["onRemainMins"]  = currentStatus.timers.onMinutesRemaining;
+  rootTimers["offMins"]       = currentStatus.timers.offMinutesSet;
+  rootTimers["offRemainMins"] = currentStatus.timers.offMinutesRemaining;
+
+  char bufferTimers[512];
+  rootTimers.printTo(bufferTimers, sizeof(bufferTimers));
+
+  if(!mqtt_client.publish(heatpump_timers_topic, bufferTimers, true)) {
+    mqtt_client.publish(heatpump_debug_topic, "failed to publish timer info to heatpump/status topic");
+  }
 }
 
 void hpPacketDebug(byte* packet, unsigned int length, char* packetDirection) {
-  if(_debugMode) {
+  if (_debugMode) {
     String message;
     for (int idx = 0; idx < length; idx++) {
       if (packet[idx] < 16) {
@@ -103,18 +125,20 @@ void hpPacketDebug(byte* packet, unsigned int length, char* packetDirection) {
       }
       message += String(packet[idx], HEX) + " ";
     }
-  
+
     const size_t bufferSize = JSON_OBJECT_SIZE(1);
     DynamicJsonBuffer jsonBuffer(bufferSize);
-    
+
     JsonObject& root = jsonBuffer.createObject();
-  
+
     root[packetDirection] = message;
-  
+
     char buffer[512];
     root.printTo(buffer, sizeof(buffer));
-    
-    mqtt_client.publish(heatpump_debug_topic, buffer);
+
+    if(!mqtt_client.publish(heatpump_debug_topic, buffer)) {
+      mqtt_client.publish(heatpump_debug_topic, "failed to publish to heatpump/debug topic");
+    }
   }
 }
 
@@ -125,44 +149,44 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     message[i] = (char)payload[i];
   }
   message[length] = '\0';
-    
-  if(strcmp(topic, heatpump_set_topic) == 0) { //if the incoming message is on the heatpump_set_topic topic...
+
+  if (strcmp(topic, heatpump_set_topic) == 0) { //if the incoming message is on the heatpump_set_topic topic...
     // Parse message into JSON
     const size_t bufferSize = JSON_OBJECT_SIZE(6);
     DynamicJsonBuffer jsonBuffer(bufferSize);
     JsonObject& root = jsonBuffer.parseObject(message);
-  
+
     if (!root.success()) {
       mqtt_client.publish(heatpump_debug_topic, "!root.success(): invalid JSON on heatpump_set_topic...");
       return;
     }
-  
+
     // Step 3: Retrieve the values
     if (root.containsKey("power")) {
       String power = root["power"];
       hp.setPowerSetting(power);
     }
-    
+
     if (root.containsKey("mode")) {
       String mode = root["mode"];
       hp.setModeSetting(mode);
     }
-    
+
     if (root.containsKey("temperature")) {
       int temperature = root["temperature"];
       hp.setTemperature(temperature);
     }
-    
+
     if (root.containsKey("fan")) {
       String fan = root["fan"];
       hp.setFanSpeed(fan);
     }
-    
+
     if (root.containsKey("vane")) {
       String vane = root["vane"];
       hp.setVaneSetting(vane);
     }
-    
+
     if (root.containsKey("wideVane")) {
       String wideVane = root["wideVane"];
       hp.setWideVaneSetting(wideVane);
@@ -170,41 +194,41 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
     if (root.containsKey("custom")) {
       String custom = root["custom"];
-      
+
       // copy custom packet to char array
-      char buffer[(custom.length()+1)]; // +1 for the NULL at the end
-      custom.toCharArray(buffer, (custom.length()+1)); 
-      
+      char buffer[(custom.length() + 1)]; // +1 for the NULL at the end
+      custom.toCharArray(buffer, (custom.length() + 1));
+
       byte bytes[20]; // max custom packet bytes is 20
-      int byteCount = 0; 
-      char *nextByte; 
+      int byteCount = 0;
+      char *nextByte;
 
       // loop over the byte string, breaking it up by spaces (or at the end of the line - \n)
-      nextByte = strtok(buffer, " "); 
+      nextByte = strtok(buffer, " ");
       while (nextByte != NULL && byteCount < 20) {
         bytes[byteCount] = strtol(nextByte, NULL, 16); // convert from hex string
-        nextByte = strtok(NULL, "   "); 
-        byteCount++; 
+        nextByte = strtok(NULL, "   ");
+        byteCount++;
       }
-      
+
       // dump the packet so we can see what it is. handy because you can run the code without connecting the ESP to the heatpump, and test sending custom packets
       hpPacketDebug(bytes, byteCount, "customPacket");
 
       hp.sendCustomPacket(bytes, byteCount);
-    }   
-    else { 
+    }
+    else {
       bool result = hp.update();
-  
-      if(!result) {
+
+      if (!result) {
         mqtt_client.publish(heatpump_debug_topic, "heatpump: update() failed");
       }
     }
-    
-  } else if(strcmp(topic, heatpump_debug_set_topic) == 0) { //if the incoming message is on the heatpump_debug_set_topic topic...
-    if(strcmp(message, "on") == 0) {
+
+  } else if (strcmp(topic, heatpump_debug_set_topic) == 0) { //if the incoming message is on the heatpump_debug_set_topic topic...
+    if (strcmp(message, "on") == 0) {
       _debugMode = true;
       mqtt_client.publish(heatpump_debug_topic, "debug mode enabled");
-    } else if(strcmp(message, "off") == 0) {
+    } else if (strcmp(message, "off") == 0) {
       _debugMode = false;
       mqtt_client.publish(heatpump_debug_topic, "debug mode disabled");
     }
@@ -233,9 +257,9 @@ void loop() {
   }
 
   hp.sync();
-  
-  if(millis() > (lastTempSend + SEND_ROOM_TEMP_INTERVAL_MS)) { // only send the temperature every 60s
-    sendCurrentRoomTemperature(hp.getRoomTemperature());
+
+  if (millis() > (lastTempSend + SEND_ROOM_TEMP_INTERVAL_MS)) { // only send the temperature every 60s
+    hpStatusChanged(hp.getStatus());
     lastTempSend = millis();
   }
 

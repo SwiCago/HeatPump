@@ -4,6 +4,7 @@
 
 HeatPump	KEYWORD1
 heatpumpSettings	KEYWORD1
+heatpumpStatus	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -12,6 +13,9 @@ heatpumpSettings	KEYWORD1
 connect	KEYWORD2
 update	KEYWORD2
 sync	KEYWORD2
+enableAutoUpdate	KEYWORD2
+disableAutoUpdate	KEYWORD2
+
 getSettings	KEYWORD2
 setSettings	KEYWORD2
 setPowerSetting	KEYWORD2
@@ -28,13 +32,22 @@ getVaneSetting	KEYWORD2
 setVaneSetting	KEYWORD2
 getWideVaneSetting	KEYWORD2
 setWideVaneSetting	KEYWORD2
+getIseeBool	KEYWORD2
+
+getStatus	KEYWORD2
 getRoomTemperature	KEYWORD2
+getOperating	KEYWORD2
+
 FahrenheitToCelsius	KEYWORD2
 CelsiusToFahrenheit	KEYWORD2
+
 setSettingsChangedCallback	KEYWORD2
+setStatusChangedCallback	KEYWORD2
 setPacketCallback	KEYWORD2
 setRoomTempChangedCallback	KEYWORD2
+
 sendCustomPacket	KEYWORD2
+
 
 #######################################
 # Constants (LITERAL1)
@@ -42,3 +55,6 @@ sendCustomPacket	KEYWORD2
 
 RQST_PKT_SETTINGS	LITERAL1
 RQST_PKT_ROOM_TEMP	LITERAL1
+RQST_PKT_TIMERS	LITERAL1
+RQST_PKT_STATUS	LITERAL1
+RQST_PKT_STANDBY	LITERAL1
