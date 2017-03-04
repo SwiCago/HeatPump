@@ -6,7 +6,7 @@
 
 #include "mitsubishi_heatpump_mqtt_esp8266.h"
 
-#if OTA
+#ifdef OTA
   #include <ESP8266mDNS.h>
   #include <ArduinoOTA.h>
 #endif
@@ -48,7 +48,7 @@ void setup() {
   hp.setStatusChangedCallback(hpStatusChanged);
   hp.setPacketCallback(hpPacketDebug);
 
-  #if OTA
+  #ifdef OTA
     ArduinoOTA.begin();
   #endif
   
@@ -265,7 +265,7 @@ void loop() {
 
   mqtt_client.loop();
   
-#if OTA
+#ifdef OTA
    ArduinoOTA.handle();
 #endif
 }
