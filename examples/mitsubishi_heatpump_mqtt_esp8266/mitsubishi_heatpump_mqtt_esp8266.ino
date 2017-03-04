@@ -102,12 +102,11 @@ void hpStatusChanged(heatpumpStatus currentStatus) {
   DynamicJsonBuffer jsonBufferTimers(bufferSizeTimers);
   
   JsonObject& rootTimers = jsonBufferTimers.createObject();
-  JsonObject& timers = rootTimers.createNestedObject("timers");
-  timers["mode"]          = currentStatus.timers.mode;
-  timers["onMins"]        = currentStatus.timers.onMinutesSet;
-  timers["onRemainMins"]  = currentStatus.timers.onMinutesRemaining;
-  timers["offMins"]       = currentStatus.timers.offMinutesSet;
-  timers["offRemainMins"] = currentStatus.timers.offMinutesRemaining;
+  rootTimers["mode"]          = currentStatus.timers.mode;
+  rootTimers["onMins"]        = currentStatus.timers.onMinutesSet;
+  rootTimers["onRemainMins"]  = currentStatus.timers.onMinutesRemaining;
+  rootTimers["offMins"]       = currentStatus.timers.offMinutesSet;
+  rootTimers["offRemainMins"] = currentStatus.timers.offMinutesRemaining;
 
   char bufferTimers[512];
   rootTimers.printTo(bufferTimers, sizeof(bufferTimers));
