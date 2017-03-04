@@ -55,6 +55,7 @@ struct heatpumpSettings {
   String vane; //vertical vane, up/down
   String wideVane; //horizontal vane, left/right
   bool iSee;   //iSee sensor, at the moment can only detect it, not set it
+  bool connected;
 };
 
 struct heatpumpStatus {
@@ -90,11 +91,12 @@ class HeatPump
       0x09  // request standby mode (maybe?) RQST_PKT_STANDBY
     };
 
-    const int RCVD_PKT_FAIL           = 0;
-    const int RCVD_PKT_SETTINGS       = 1;
-    const int RCVD_PKT_ROOM_TEMP      = 2;
-    const int RCVD_PKT_UPDATE_SUCCESS = 3;
-    const int RCVD_PKT_STATUS         = 4;
+    const int RCVD_PKT_FAIL            = 0;
+    const int RCVD_PKT_CONNECT_SUCCESS = 1;
+    const int RCVD_PKT_SETTINGS        = 2;
+    const int RCVD_PKT_ROOM_TEMP       = 3;
+    const int RCVD_PKT_UPDATE_SUCCESS  = 4;
+    const int RCVD_PKT_STATUS          = 5;
 
     const byte CONTROL_PACKET_1[5] = {0x01, 0x02, 0x04, 0x08, 0x10};
                                   //{"POWER","MODE","TEMP","FAN","VANE"};
@@ -126,6 +128,8 @@ class HeatPump
     HardwareSerial * _HardSerial;
     unsigned int lastSend;
     int infoMode;
+    unsigned int lastRecv;
+    bool connected = false;
     bool autoUpdate;
     bool firstRun;
     bool tempMode; 
@@ -158,7 +162,7 @@ class HeatPump
 
     // general
     HeatPump();
-    void connect(HardwareSerial *serial);
+    bool connect(HardwareSerial *serial);
     bool update();
     void sync(byte packetType = PACKET_TYPE_DEFAULT);
     void enableAutoUpdate();
