@@ -55,6 +55,7 @@ bool operator!(const heatpumpSettings& settings) {
 
 HeatPump::HeatPump() {
   lastSend = 0;
+  lastRecv = millis() - (PACKET_SENT_INTERVAL_MS * 10);
   infoMode = false;
   autoUpdate = false;
   firstRun = true;
@@ -63,8 +64,11 @@ HeatPump::HeatPump() {
 
 // Public Methods //////////////////////////////////////////////////////////////
 
-void HeatPump::connect(HardwareSerial *serial) {
-  _HardSerial = serial;
+bool HeatPump::connect(HardwareSerial *serial) {
+  if(serial != NULL) {
+    _HardSerial = serial;
+  }
+  connected = false;
   _HardSerial->begin(2400, SERIAL_8E1);
   
   // settle before we start sending packets
@@ -73,10 +77,12 @@ void HeatPump::connect(HardwareSerial *serial) {
   // send the CONNECT packet twice - need to copy the CONNECT packet locally
   byte packet[CONNECT_LEN];
   memcpy(packet, CONNECT, CONNECT_LEN);
-  for(int count = 0; count < 2; count++) {
-    writePacket(packet, CONNECT_LEN);
+  //for(int count = 0; count < 2; count++) {
+  writePacket(packet, CONNECT_LEN);
     delay(1100);
-  }
+  int packetType = readPacket();
+  return packetType == RCVD_PKT_CONNECT_SUCCESS;
+  //}
 }
 
 bool HeatPump::update() {
@@ -101,7 +107,10 @@ bool HeatPump::update() {
 }
 
 void HeatPump::sync(byte packetType) {
-  if(autoUpdate && !firstRun && wantedSettings != currentSettings && packetType == PACKET_TYPE_DEFAULT) {
+  if((!connected) || (millis() - (PACKET_SENT_INTERVAL_MS * 10) > lastRecv)) {
+    connect(NULL);
+  }
+  else if(autoUpdate && !firstRun && wantedSettings != currentSettings && packetType == PACKET_TYPE_DEFAULT) {
      update(); 
   }
   else if(canSend()) {
@@ -428,6 +437,7 @@ int HeatPump::readPacket() {
       checksum = (0xfc - dataSum) & 0xff;
       
       if(data[dataLength] == checksum) {
+        lastRecv = millis();
         if(packetCallback) {
           byte packet[37]; // we are going to put header[5] and data[32] into this, so the whole packet is sent to the callback
           for(int i=0; i<INFOHEADER_LEN; i++) {
@@ -491,6 +501,9 @@ int HeatPump::readPacket() {
           return RCVD_PKT_ROOM_TEMP;
         } else if(header[1] == 0x61) { //Last update was successful 
           return RCVD_PKT_UPDATE_SUCCESS;
+        } else if(header[1] == 0x7a) { //Last update was successful 
+          connected = true;
+          return RCVD_PKT_CONNECT_SUCCESS;
         }
       }
     }
