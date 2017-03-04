@@ -59,6 +59,7 @@ HeatPump::HeatPump() {
   autoUpdate = false;
   firstRun = true;
   tempMode = false;
+  externalUpdate = false;
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -111,6 +112,10 @@ void HeatPump::sync(byte packetType) {
   }
 
   readPacket(); 
+}
+
+void HeatPump::enableExternalUpdate() {
+  externalUpdate = true;
 }
 
 void HeatPump::enableAutoUpdate() {
@@ -465,8 +470,7 @@ int HeatPump::readPacket() {
           }
 
           // if wantedSettings is null (indicating that this is the first time we have synced with the heatpump, set it to receivedSettings
-          //if(!wantedSettings) {
-          if(firstRun) {
+          if(firstRun || externalUpdate) {
             wantedSettings = currentSettings;
             firstRun = false;
           }

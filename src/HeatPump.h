@@ -115,7 +115,8 @@ class HeatPump
     bool infoMode;
     bool autoUpdate;
     bool firstRun;
-    bool tempMode; 
+    bool tempMode;
+    bool externalUpdate;
 
     String lookupByteMapValue(const String valuesMap[], const byte byteMap[], int len, byte byteValue);
     int    lookupByteMapValue(const int valuesMap[], const byte byteMap[], int len, byte byteValue);
@@ -143,6 +144,7 @@ class HeatPump
     void connect(HardwareSerial *serial);
     bool update();
     void sync(byte packetType = PACKET_TYPE_DEFAULT);
+    void enableExternalUpdate();
     void enableAutoUpdate();
     void disableAUtoUpdate();
     heatpumpSettings getSettings();
