@@ -1,3 +1,6 @@
+
+//#define OTA
+
 // wifi settings
 const char* ssid     = "<YOUR WIFI SSID GOES HERE>";
 const char* password = "<YOUR WIFI PASSWORD GOES HERE>";
