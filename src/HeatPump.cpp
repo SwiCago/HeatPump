@@ -144,7 +144,7 @@ void HeatPump::enableAutoUpdate() {
   autoUpdate = true;
 }
 
-void HeatPump::disableAUtoUpdate() {
+void HeatPump::disableAutoUpdate() {
   autoUpdate = false;
 }
 

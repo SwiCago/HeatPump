@@ -112,7 +112,7 @@ void hpStatusChanged(heatpumpStatus currentStatus) {
   char bufferTimers[512];
   rootTimers.printTo(bufferTimers, sizeof(bufferTimers));
 
-  if(!mqtt_client.publish(heatpump_status_topic, bufferTimers, true)) {
+  if(!mqtt_client.publish(heatpump_timers_topic, bufferTimers, true)) {
     mqtt_client.publish(heatpump_debug_topic, "failed to publish timer info to heatpump/status topic");
   }
 }

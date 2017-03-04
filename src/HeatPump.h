@@ -183,7 +183,7 @@ class HeatPump
     bool update();
     void sync(byte packetType = PACKET_TYPE_DEFAULT);
     void enableAutoUpdate();
-    void disableAUtoUpdate();
+    void disableAutoUpdate();
 
     // settings
     heatpumpSettings getSettings();
