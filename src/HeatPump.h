@@ -58,13 +58,25 @@ struct heatpumpSettings {
   bool connected;
 };
 
+bool operator==(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
+bool operator!=(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
+
+struct heatpumpTimers {
+  String mode;
+  int onMinutesSet;
+  int onMinutesRemaining;
+  int offMinutesSet;
+  int offMinutesRemaining;
+};
+
+bool operator==(const heatpumpTimers& lhs, const heatpumpTimers& rhs);
+bool operator!=(const heatpumpTimers& lhs, const heatpumpTimers& rhs);
+
 struct heatpumpStatus {
   float roomTemperature;
   bool operating; // if true, the heatpump is operating to reach the desired temperature
+  heatpumpTimers timers;
 };
-
-bool operator==(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
-bool operator!=(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
 
 class HeatPump
 {
@@ -97,27 +109,32 @@ class HeatPump
     const int RCVD_PKT_ROOM_TEMP       = 3;
     const int RCVD_PKT_UPDATE_SUCCESS  = 4;
     const int RCVD_PKT_STATUS          = 5;
+    const int RCVD_PKT_TIMER           = 6;
 
-    const byte CONTROL_PACKET_1[5] = {0x01, 0x02, 0x04, 0x08, 0x10};
-                                  //{"POWER","MODE","TEMP","FAN","VANE"};
+    const byte CONTROL_PACKET_1[5] = {0x01,    0x02,  0x04,  0x08, 0x10};
+                                   //{"POWER","MODE","TEMP","FAN","VANE"};
     const byte CONTROL_PACKET_2[1] = {0x01};
-                                  //{"WIDEVANE"};
-    const byte POWER[2]          = {0x00, 0x01};
-    const String POWER_MAP[2]    = {"OFF", "ON"};
-    const byte MODE[5]           = {0x01,   0x02,  0x03, 0x07, 0x08};
-    const String MODE_MAP[5]     = {"HEAT", "DRY", "COOL", "FAN", "AUTO"};
-    const byte TEMP[16]          = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
-    const int TEMP_MAP[16]       = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16};
-    const byte FAN[6]            = {0x00,  0x01,   0x02, 0x03, 0x05, 0x06};
-    const String FAN_MAP[6]      = {"AUTO", "QUIET", "1", "2", "3", "4"};
-    const byte VANE[7]           = {0x00,  0x01, 0x02, 0x03, 0x04, 0x05, 0x07};
-    const String VANE_MAP[7]     = {"AUTO", "1", "2", "3", "4", "5", "SWING"};
-    const byte WIDEVANE[7]       = {0x01, 0x02, 0x03, 0x04, 0x05, 0x08, 0x0c};
-    const String WIDEVANE_MAP[7] = {"<<", "<",  "|",  ">",  ">>", "<>", "SWING"};
-    const byte ROOM_TEMP[32]     = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-                                    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
-    const int ROOM_TEMP_MAP[32]  = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
-                                    26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41};
+                                   //{"WIDEVANE"};
+    const byte POWER[2]            = {0x00, 0x01};
+    const String POWER_MAP[2]      = {"OFF", "ON"};
+    const byte MODE[5]             = {0x01,   0x02,  0x03, 0x07, 0x08};
+    const String MODE_MAP[5]       = {"HEAT", "DRY", "COOL", "FAN", "AUTO"};
+    const byte TEMP[16]            = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    const int TEMP_MAP[16]         = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16};
+    const byte FAN[6]              = {0x00,  0x01,   0x02, 0x03, 0x05, 0x06};
+    const String FAN_MAP[6]        = {"AUTO", "QUIET", "1", "2", "3", "4"};
+    const byte VANE[7]             = {0x00,  0x01, 0x02, 0x03, 0x04, 0x05, 0x07};
+    const String VANE_MAP[7]       = {"AUTO", "1", "2", "3", "4", "5", "SWING"};
+    const byte WIDEVANE[7]         = {0x01, 0x02, 0x03, 0x04, 0x05, 0x08, 0x0c};
+    const String WIDEVANE_MAP[7]   = {"<<", "<",  "|",  ">",  ">>", "<>", "SWING"};
+    const byte ROOM_TEMP[32]       = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+                                      0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+    const int ROOM_TEMP_MAP[32]    = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                      26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41};
+    const byte TIMER_MODE[4]       = {0x00,  0x01,  0x02, 0x03};
+    const String TIMER_MODE_MAP[4] = {"NONE", "OFF", "ON", "BOTH"};
+
+    static const int TIMER_INCREMENT_MINUTES = 10;
 
     // these settings will be initialised in connect()
     heatpumpSettings currentSettings;
@@ -156,9 +173,9 @@ class HeatPump
     // indexes for INFOMODE array (public so they can be optionally passed to sync())
     const int RQST_PKT_SETTINGS  = 0;
     const int RQST_PKT_ROOM_TEMP = 1;
-    const int RQST_PKT_TIMERS = 2;
-    const int RQST_PKT_STATUS = 3;
-    const int RQST_PKT_STANDBY = 4;
+    const int RQST_PKT_TIMERS    = 2;
+    const int RQST_PKT_STATUS    = 3;
+    const int RQST_PKT_STANDBY   = 4;
 
     // general
     HeatPump();

@@ -50,6 +50,22 @@ bool operator!(const heatpumpSettings& settings) {
          !settings.iSee;
 }
 
+bool operator==(const heatpumpTimers& lhs, const heatpumpTimers& rhs) {
+  return lhs.mode                == rhs.mode && 
+         lhs.onMinutesSet        == rhs.onMinutesSet &&
+         lhs.onMinutesRemaining  == rhs.onMinutesRemaining &&
+         lhs.offMinutesSet       == rhs.offMinutesSet &&
+         lhs.offMinutesRemaining == rhs.offMinutesRemaining; 
+}
+
+bool operator!=(const heatpumpTimers& lhs, const heatpumpTimers& rhs) {
+  return lhs.mode                != rhs.mode || 
+         lhs.onMinutesSet        != rhs.onMinutesSet ||
+         lhs.onMinutesRemaining  != rhs.onMinutesRemaining ||
+         lhs.offMinutesSet       != rhs.offMinutesSet ||
+         lhs.offMinutesRemaining != rhs.offMinutesRemaining;
+}
+
 
 // Constructor /////////////////////////////////////////////////////////////////
 
@@ -60,6 +76,8 @@ HeatPump::HeatPump() {
   autoUpdate = false;
   firstRun = true;
   tempMode = false;
+
+  currentStatus = {0, false, {TIMER_MODE_MAP[0], 0, 0, 0, 0}}; // initialise to all off, then it will update shortly after connect
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -439,14 +457,17 @@ int HeatPump::readPacket() {
       // read checksum byte
       data[dataLength] = _HardSerial->read();
   
+      // sum up the header bytes...
       for (int i = 0; i < INFOHEADER_LEN; i++) {
         dataSum += header[i];
       }
 
+      // ...and add to that the sum of the data bytes
       for (int i = 0; i < dataLength; i++) {
         dataSum += data[i];
       }
   
+      // calculate checksum
       checksum = (0xfc - dataSum) & 0xff;
       
       if(data[dataLength] == checksum) {
@@ -516,7 +537,9 @@ int HeatPump::readPacket() {
 
                 if(statusChangedCallback) {
                   statusChangedCallback(currentStatus);
-                } else if(roomTempChangedCallback) { // this should be deprecated - statusChangedCallback covers it
+                }
+
+                if(roomTempChangedCallback) { // this should be deprecated - statusChangedCallback covers it
                   roomTempChangedCallback(currentStatus.roomTemperature);
                 }
               } else {
@@ -526,9 +549,29 @@ int HeatPump::readPacket() {
               return RCVD_PKT_ROOM_TEMP;
             }
 
-            case 0x04: // unknown
-            case 0x05: // timer packet
-              break;
+            case 0x04: { // unknown
+                break; 
+            }
+
+            case 0x05: { // timer packet
+              heatpumpTimers receivedTimers;
+
+              receivedTimers.mode                = lookupByteMapValue(TIMER_MODE_MAP, TIMER_MODE, 4, data[3]);
+              receivedTimers.onMinutesSet        = data[4] * TIMER_INCREMENT_MINUTES;
+              receivedTimers.onMinutesRemaining  = data[6] * TIMER_INCREMENT_MINUTES;
+              receivedTimers.offMinutesSet       = data[5] * TIMER_INCREMENT_MINUTES;
+              receivedTimers.offMinutesRemaining = data[7] * TIMER_INCREMENT_MINUTES;
+
+              // callback for status change
+              if(statusChangedCallback && currentStatus.timers != receivedTimers) {
+                currentStatus.timers = receivedTimers;
+                statusChangedCallback(currentStatus);
+              } else {
+                currentStatus.timers = receivedTimers;
+              }
+
+              return RCVD_PKT_TIMER;
+            }
 
             case 0x06: { // status
               heatpumpStatus receivedStatus;
