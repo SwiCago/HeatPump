@@ -143,9 +143,9 @@ class HeatPump
     heatpumpStatus currentStatus;
   
     HardwareSerial * _HardSerial;
-    unsigned int lastSend;
+    unsigned long lastSend;
     int infoMode;
-    unsigned int lastRecv;
+    unsigned long lastRecv;
     bool connected = false;
     bool autoUpdate;
     bool firstRun;
