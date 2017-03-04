@@ -6,6 +6,11 @@
 
 #include "mitsubishi_heatpump_mqtt_esp8266.h"
 
+#if OTA
+  #include <ESP8266mDNS.h>
+  #include <ArduinoOTA.h>
+#endif
+
 // wifi, mqtt and heatpump client instances
 WiFiClient espClient;
 PubSubClient mqtt_client(espClient);
@@ -42,6 +47,11 @@ void setup() {
   hp.setSettingsChangedCallback(hpSettingsChanged);
   hp.setRoomTempChangedCallback(sendCurrentRoomTemperature);
   hp.setPacketCallback(hpPacketDebug);
+
+  #if OTA
+    ArduinoOTA.begin();
+  #endif
+  
   while(!hp.connect(&Serial)) { }
   lastTempSend = millis();
 }
@@ -230,4 +240,8 @@ void loop() {
   }
 
   mqtt_client.loop();
+  
+#if OTA
+   ArduinoOTA.handle();
+#endif
 }
