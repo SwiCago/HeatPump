@@ -55,7 +55,7 @@ bool operator!(const heatpumpSettings& settings) {
 
 HeatPump::HeatPump() {
   lastSend = 0;
-  infoMode = false;
+  infoMode = 0;
   autoUpdate = false;
   firstRun = true;
   tempMode = false;
@@ -202,8 +202,16 @@ bool HeatPump::getIseeBool() { //no setter yet
   return currentSettings.iSee;
 }
 
+heatpumpStatus HeatPump::getStatus() {
+  return currentStatus;
+}
+
 float HeatPump::getRoomTemperature() {
-  return currentRoomTemp;
+  return currentStatus.roomTemperature;
+}
+
+bool HeatPump::getOperating() {
+  return currentStatus.operating;
 }
 
 unsigned int HeatPump::FahrenheitToCelsius(unsigned int tempF) {
@@ -218,6 +226,10 @@ unsigned int HeatPump::CelsiusToFahrenheit(unsigned int tempC) {
 
 void HeatPump::setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE) {
   this->settingsChangedCallback = settingsChangedCallback;
+}
+
+void HeatPump::setStatusChangedCallback(STATUS_CHANGED_CALLBACK_SIGNATURE) {
+  this->statusChangedCallback = statusChangedCallback;
 }
 
 void HeatPump::setPacketCallback(PACKET_CALLBACK_SIGNATURE) {
@@ -353,8 +365,9 @@ void HeatPump::createInfoPacket(byte *packet, byte packetType) {
   if(packetType != PACKET_TYPE_DEFAULT) {
     packet[5] = INFOMODE[packetType];
   } else {
-    packet[5] = INFOMODE[infoMode ? 1 : 0];
-    infoMode = !infoMode;
+    // request current infoMode, and increment for the next request
+    packet[5] = INFOMODE[infoMode]; 
+    infoMode = (infoMode == (INFOMODE_LEN - 1)) ? 0 : infoMode += 1;
   }
 
   // pad the packet out
@@ -391,7 +404,7 @@ int HeatPump::readPacket() {
     // read until we get start byte 0xfc
     while(_HardSerial->available() > 0 && !foundStart) {
       header[0] = _HardSerial->read();
-      if(header[0] == 0xFC) {
+      if(header[0] == HEADER[0]) {
         foundStart = true;
         delay(100); // found that this delay increases accuracy when reading, might not be needed though
       }
@@ -407,7 +420,7 @@ int HeatPump::readPacket() {
     }
     
     //check header
-    if(header[0] == 0xFC && header[2] == 0x01 && header[3] == 0x30) {
+    if(header[0] == HEADER[0] && header[2] == HEADER[2] && header[3] == HEADER[3]) {
       dataLength = header[4];
       
       for(int i=0;i<dataLength;i++) {
@@ -439,57 +452,96 @@ int HeatPump::readPacket() {
           packetCallback(packet, PACKET_LEN, (char*)"packetRecv");
         }
 
-        if(header[1] == 0x62 && data[0] == 0x02) { // setting information
-          heatpumpSettings receivedSettings;
-          receivedSettings.power       = lookupByteMapValue(POWER_MAP, POWER, 2, data[3]);
-          receivedSettings.iSee = data[4] > 0x08 ? true : false;
-          receivedSettings.mode = lookupByteMapValue(MODE_MAP, MODE, 5, receivedSettings.iSee  ? (data[4] - 0x08) : data[4]);
-          if(data[11] != 0x00) {
-            int temp = data[11];
-            temp -= 128;
-            receivedSettings.temperature = (float)temp / 2;
-            tempMode =  true;
-          }
-          else {
-            receivedSettings.temperature = lookupByteMapValue(TEMP_MAP, TEMP, 16, data[5]);
-          }
-          receivedSettings.fan         = lookupByteMapValue(FAN_MAP, FAN, 6, data[6]);
-          receivedSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
-          receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);   
-          
-          if(settingsChangedCallback && receivedSettings != currentSettings) {
-            currentSettings = receivedSettings;
-            settingsChangedCallback();
-          } else {
-            currentSettings = receivedSettings;
-          }
+        if(header[1] == 0x62) {
+          switch(data[0]) {
+            case 0x02: { // setting information
+              heatpumpSettings receivedSettings;
+              receivedSettings.power       = lookupByteMapValue(POWER_MAP, POWER, 2, data[3]);
+              receivedSettings.iSee = data[4] > 0x08 ? true : false;
+              receivedSettings.mode = lookupByteMapValue(MODE_MAP, MODE, 5, receivedSettings.iSee  ? (data[4] - 0x08) : data[4]);
 
-          // if wantedSettings is null (indicating that this is the first time we have synced with the heatpump, set it to receivedSettings
-          //if(!wantedSettings) {
-          if(firstRun) {
-            wantedSettings = currentSettings;
-            firstRun = false;
-          }
+              if(data[11] != 0x00) {
+                int temp = data[11];
+                temp -= 128;
+                receivedSettings.temperature = (float)temp / 2;
+                tempMode =  true;
+              } else {
+                receivedSettings.temperature = lookupByteMapValue(TEMP_MAP, TEMP, 16, data[5]);
+              }
 
-          return RCVD_PKT_SETTINGS;
-        } else if(header[1] == 0x62 && data[0] == 0x03) { //Room temperature reading
-          float receivedRoomTemp;
-          if(data[6] != 0x00) {
-            int temp = data[6];
-            temp -= 128;
-            receivedRoomTemp = (float)temp / 2;
+              receivedSettings.fan         = lookupByteMapValue(FAN_MAP, FAN, 6, data[6]);
+              receivedSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
+              receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);   
+              
+              if(settingsChangedCallback && receivedSettings != currentSettings) {
+                currentSettings = receivedSettings;
+                settingsChangedCallback();
+              } else {
+                currentSettings = receivedSettings;
+              }
+
+              // if this is the first time we have synced with the heatpump, set wantedSettings to receivedSettings
+              if(firstRun) {
+                wantedSettings = currentSettings;
+                firstRun = false;
+              }
+
+              return RCVD_PKT_SETTINGS;
+            }
+
+            case 0x03: { //Room temperature reading
+              heatpumpStatus receivedStatus;
+
+              float receivedRoomTemp;
+              if(data[6] != 0x00) {
+                int temp = data[6];
+                temp -= 128;
+                receivedStatus.roomTemperature = (float)temp / 2;
+              } else {
+                receivedStatus.roomTemperature = lookupByteMapValue(ROOM_TEMP_MAP, ROOM_TEMP, 32, data[3]);
+              }
+
+              if((statusChangedCallback || roomTempChangedCallback) && currentStatus.roomTemperature != receivedStatus.roomTemperature) {
+                currentStatus.roomTemperature = receivedStatus.roomTemperature;
+
+                if(statusChangedCallback) {
+                  statusChangedCallback(currentStatus);
+                } else if(roomTempChangedCallback) { // this should be deprecated - statusChangedCallback covers it
+                  roomTempChangedCallback(currentStatus.roomTemperature);
+                }
+              } else {
+                currentStatus.roomTemperature = receivedStatus.roomTemperature;
+              }
+
+              return RCVD_PKT_ROOM_TEMP;
+            }
+
+            case 0x04: // unknown
+            case 0x05: // timer packet
+              break;
+
+            case 0x06: { // status
+              heatpumpStatus receivedStatus;
+              receivedStatus.operating = data[4];
+
+              // callback for status change
+              if(statusChangedCallback && currentStatus.operating != receivedStatus.operating) {
+                currentStatus.operating = receivedStatus.operating;
+                statusChangedCallback(currentStatus);
+              } else {
+                currentStatus.operating = receivedStatus.operating;
+              }
+
+              return RCVD_PKT_STATUS;
+            }
+
+            case 0x09: { // standby mode maybe?
+              break;
+            }
           } 
-          else {
-            receivedRoomTemp = lookupByteMapValue(ROOM_TEMP_MAP, ROOM_TEMP, 32, data[3]);
-          }
-          if(roomTempChangedCallback && currentRoomTemp != receivedRoomTemp) {
-            currentRoomTemp = receivedRoomTemp;
-            roomTempChangedCallback(currentRoomTemp);
-          } else {
-            currentRoomTemp = receivedRoomTemp;
-          }
-          return RCVD_PKT_ROOM_TEMP;
-        } else if(header[1] == 0x61) { //Last update was successful 
+        } 
+        
+        if(header[1] == 0x61) { //Last update was successful 
           return RCVD_PKT_UPDATE_SUCCESS;
         }
       }

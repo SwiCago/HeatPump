@@ -35,10 +35,12 @@
 #ifdef ESP8266
 #include <functional>
 #define SETTINGS_CHANGED_CALLBACK_SIGNATURE std::function<void()> settingsChangedCallback
+#define STATUS_CHANGED_CALLBACK_SIGNATURE std::function<void(heatpumpStatus newStatus)> statusChangedCallback
 #define PACKET_CALLBACK_SIGNATURE std::function<void(byte* packet, unsigned int length, char* packetDirection)> packetCallback
 #define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE std::function<void(unsigned int currentRoomTemperature)> roomTempChangedCallback
 #else
 #define SETTINGS_CHANGED_CALLBACK_SIGNATURE void (*settingsChangedCallback)()
+#define STATUS_CHANGED_CALLBACK_SIGNATURE void (*statusChangedCallback)(heatpumpStatus newStatus)
 #define PACKET_CALLBACK_SIGNATURE void (*packetCallback)(byte* packet, unsigned int length, char* packetDirection)
 #define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE void (*roomTempChangedCallback)(unsigned int currentRoomTemperature)
 #endif
@@ -55,6 +57,11 @@ struct heatpumpSettings {
   bool iSee;   //iSee sensor, at the moment can only detect it, not set it
 };
 
+struct heatpumpStatus {
+  float roomTemperature;
+  bool operating; // if true, the heatpump is operating to reach the desired temperature
+};
+
 bool operator==(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
 bool operator!=(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
 
@@ -65,23 +72,29 @@ class HeatPump
     static const int PACKET_SENT_INTERVAL_MS = 1000;
     static const int PACKET_TYPE_DEFAULT = 99;
 
-    const byte CONNECT[8] = {0xfc, 0x5a, 0x01, 0x30, 0x02, 0xca, 0x01, 0xa8};
-    const byte HEADER[8]  = {0xfc, 0x41, 0x01, 0x30, 0x10, 0x01, 0x00, 0x00};
     static const int CONNECT_LEN = 8;
+    const byte CONNECT[CONNECT_LEN] = {0xfc, 0x5a, 0x01, 0x30, 0x02, 0xca, 0x01, 0xa8};
     static const int HEADER_LEN  = 8;
+    const byte HEADER[HEADER_LEN]  = {0xfc, 0x41, 0x01, 0x30, 0x10, 0x01, 0x00, 0x00};
 
     const byte INFOHEADER[5]  = {0xfc, 0x42, 0x01, 0x30, 0x10};
     static const int INFOHEADER_LEN  = 5;
  
-    const byte INFOMODE[2]    = {
+    static const int INFOMODE_LEN = 6;
+    const byte INFOMODE[INFOMODE_LEN] = {
       0x02, // request a settings packet - RQST_PKT_SETTINGS
-      0x03  // request the current room temp - RQST_PKT_ROOM_TEMP
+      0x03, // request the current room temp - RQST_PKT_ROOM_TEMP
+      0x04, // unknown
+      0x05, // request the timers - RQST_PKT_TIMERS
+      0x06, // request status - RQST_PKT_STATUS
+      0x09  // request standby mode (maybe?) RQST_PKT_STANDBY
     };
 
     const int RCVD_PKT_FAIL           = 0;
     const int RCVD_PKT_SETTINGS       = 1;
     const int RCVD_PKT_ROOM_TEMP      = 2;
     const int RCVD_PKT_UPDATE_SUCCESS = 3;
+    const int RCVD_PKT_STATUS         = 4;
 
     const byte CONTROL_PACKET_1[5] = {0x01, 0x02, 0x04, 0x08, 0x10};
                                   //{"POWER","MODE","TEMP","FAN","VANE"};
@@ -107,12 +120,12 @@ class HeatPump
     // these settings will be initialised in connect()
     heatpumpSettings currentSettings;
     heatpumpSettings wantedSettings;
+
+    heatpumpStatus currentStatus;
   
-    float currentRoomTemp;
-             
     HardwareSerial * _HardSerial;
     unsigned int lastSend;
-    bool infoMode;
+    int infoMode;
     bool autoUpdate;
     bool firstRun;
     bool tempMode; 
@@ -131,6 +144,7 @@ class HeatPump
 
     // callbacks
     SETTINGS_CHANGED_CALLBACK_SIGNATURE;
+    STATUS_CHANGED_CALLBACK_SIGNATURE;
     PACKET_CALLBACK_SIGNATURE;
     ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE;
 
@@ -138,13 +152,19 @@ class HeatPump
     // indexes for INFOMODE array (public so they can be optionally passed to sync())
     const int RQST_PKT_SETTINGS  = 0;
     const int RQST_PKT_ROOM_TEMP = 1;
+    const int RQST_PKT_TIMERS = 2;
+    const int RQST_PKT_STATUS = 3;
+    const int RQST_PKT_STANDBY = 4;
 
+    // general
     HeatPump();
     void connect(HardwareSerial *serial);
     bool update();
     void sync(byte packetType = PACKET_TYPE_DEFAULT);
     void enableAutoUpdate();
     void disableAUtoUpdate();
+
+    // settings
     heatpumpSettings getSettings();
     void setSettings(heatpumpSettings settings);
     void setPowerSetting(bool setting);
@@ -162,14 +182,23 @@ class HeatPump
     String getWideVaneSetting();
     void setWideVaneSetting(String setting);
     bool getIseeBool();
+
+    // status
+    heatpumpStatus getStatus();
     float getRoomTemperature();
+    bool getOperating();
+
+    // helpers
     unsigned int FahrenheitToCelsius(unsigned int tempF);
     unsigned int CelsiusToFahrenheit(unsigned int tempC);
 
+    // callbacks
     void setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE);
+    void setStatusChangedCallback(STATUS_CHANGED_CALLBACK_SIGNATURE);
     void setPacketCallback(PACKET_CALLBACK_SIGNATURE);
-    void setRoomTempChangedCallback(ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE);
+    void setRoomTempChangedCallback(ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE); // need to deprecate this, is available from setStatusChangedCallback
 
+    // expert users only!
     void sendCustomPacket(byte data[], int len); 
 
 };
