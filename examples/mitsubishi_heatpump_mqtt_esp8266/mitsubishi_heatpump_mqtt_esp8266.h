@@ -1,3 +1,6 @@
+
+//#define OTA
+
 // wifi settings
 const char* ssid     = "<YOUR WIFI SSID GOES HERE>";
 const char* password = "<YOUR WIFI PASSWORD GOES HERE>";
@@ -12,7 +15,9 @@ const char* mqtt_password = "<YOUR MQTT PASSWORD GOES HERE>";
 const char* client_id                   = "heatpump-controller-1"; // Must be unique on the MQTT network
 const char* heatpump_topic              = "heatpump";
 const char* heatpump_set_topic          = "heatpump/set";
-const char* heatpump_temperature_topic  = "heatpump/temperature";
+const char* heatpump_status_topic       = "heatpump/status";
+const char* heatpump_timers_topic       = "heatpump/timers";
+
 const char* heatpump_debug_topic        = "heatpump/debug";
 const char* heatpump_debug_set_topic    = "heatpump/debug/set";
 
