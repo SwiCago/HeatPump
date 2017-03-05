@@ -210,8 +210,8 @@ void HeatPump::setRemoteTemperature(float setting) {
     packet[i] = HEADER[i];
   }
   packet[5] = 0x07;
-  packet[6] = 0x01;
   if(setting > 0) {
+    packet[6] = 0x01;
     setting = setting * 2;
     setting = round(setting);
     setting = setting / 2;
@@ -219,7 +219,8 @@ void HeatPump::setRemoteTemperature(float setting) {
     packet[8] = (int)temp;
   }
   else {
-    packet[8] = 0x00;
+    packet[6] = 0x02;
+    packet[9] = 0x01;
   } 
   // add the checksum
   byte chkSum = checkSum(packet, 21);
