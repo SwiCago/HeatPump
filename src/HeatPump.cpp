@@ -220,7 +220,7 @@ void HeatPump::setRemoteTemperature(float setting) {
   }
   else {
     packet[6] = 0x02;
-    packet[9] = 0x01;
+    packet[9] = 0x00; //0x00 seems to current temp, but leaves prior temp as is until updated by hp. 0x01 resets both asap
   } 
   // add the checksum
   byte chkSum = checkSum(packet, 21);
