@@ -193,7 +193,11 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       hp.setWideVaneSetting(wideVane);
     }
 
-    if (root.containsKey("custom")) {
+    if(root.containsKey("remoteTemp")) {
+      float remoteTemp = root["remoteTemp"];
+      hp.setRemoteTemperature(remoteTemp);
+    }
+    else if (root.containsKey("custom")) {
       String custom = root["custom"];
 
       // copy custom packet to char array
