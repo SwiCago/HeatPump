@@ -36,11 +36,11 @@
 #include <functional>
 #define SETTINGS_CHANGED_CALLBACK_SIGNATURE std::function<void()> settingsChangedCallback
 #define PACKET_CALLBACK_SIGNATURE std::function<void(byte* packet, unsigned int length, char* packetDirection)> packetCallback
-#define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE std::function<void(unsigned int currentRoomTemperature)> roomTempChangedCallback
+#define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE std::function<void(float currentRoomTemperature)> roomTempChangedCallback
 #else
 #define SETTINGS_CHANGED_CALLBACK_SIGNATURE void (*settingsChangedCallback)()
 #define PACKET_CALLBACK_SIGNATURE void (*packetCallback)(byte* packet, unsigned int length, char* packetDirection)
-#define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE void (*roomTempChangedCallback)(unsigned int currentRoomTemperature)
+#define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE void (*roomTempChangedCallback)(float currentRoomTemperature)
 #endif
 
 typedef uint8_t byte;
