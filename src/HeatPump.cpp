@@ -219,8 +219,8 @@ void HeatPump::setRemoteTemperature(float setting) {
     packet[8] = (int)temp;
   }
   else {
-    packet[6] = 0x02;
-    packet[9] = 0x00; //0x00 seems to current temp, but leaves prior temp as is until updated by hp. 0x01 resets both asap
+    packet[6] = 0x00;
+    packet[8] = 0x80; //MHK1 send 80, even though it could be 00, since ControlByte is 00
   } 
   // add the checksum
   byte chkSum = checkSum(packet, 21);
