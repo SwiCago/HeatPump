@@ -15,7 +15,7 @@
 WiFiClient espClient;
 PubSubClient mqtt_client(espClient);
 HeatPump hp;
-uint lastTempSend;
+unsigned long lastTempSend;
 
 // debug mode, when true, will send all packets received from the heatpump to topic heatpump_debug_topic
 // this can also be set by sending "on" to heatpump_debug_set_topic
@@ -71,6 +71,7 @@ void hpSettingsChanged() {
   root["fan"]         = currentSettings.fan;
   root["vane"]        = currentSettings.vane;
   root["wideVane"]    = currentSettings.wideVane;
+  root["iSee"]        = currentSettings.iSee;
 
   char buffer[512];
   root.printTo(buffer, sizeof(buffer));
@@ -192,7 +193,11 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       hp.setWideVaneSetting(wideVane);
     }
 
-    if (root.containsKey("custom")) {
+    if(root.containsKey("remoteTemp")) {
+      float remoteTemp = root["remoteTemp"];
+      hp.setRemoteTemperature(remoteTemp);
+    }
+    else if (root.containsKey("custom")) {
       String custom = root["custom"];
 
       // copy custom packet to char array

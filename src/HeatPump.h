@@ -37,12 +37,12 @@
 #define SETTINGS_CHANGED_CALLBACK_SIGNATURE std::function<void()> settingsChangedCallback
 #define STATUS_CHANGED_CALLBACK_SIGNATURE std::function<void(heatpumpStatus newStatus)> statusChangedCallback
 #define PACKET_CALLBACK_SIGNATURE std::function<void(byte* packet, unsigned int length, char* packetDirection)> packetCallback
-#define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE std::function<void(unsigned int currentRoomTemperature)> roomTempChangedCallback
+#define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE std::function<void(float currentRoomTemperature)> roomTempChangedCallback
 #else
 #define SETTINGS_CHANGED_CALLBACK_SIGNATURE void (*settingsChangedCallback)()
 #define STATUS_CHANGED_CALLBACK_SIGNATURE void (*statusChangedCallback)(heatpumpStatus newStatus)
 #define PACKET_CALLBACK_SIGNATURE void (*packetCallback)(byte* packet, unsigned int length, char* packetDirection)
-#define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE void (*roomTempChangedCallback)(unsigned int currentRoomTemperature)
+#define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE void (*roomTempChangedCallback)(float currentRoomTemperature)
 #endif
 
 typedef uint8_t byte;
@@ -143,13 +143,14 @@ class HeatPump
     heatpumpStatus currentStatus;
   
     HardwareSerial * _HardSerial;
-    unsigned int lastSend;
+    unsigned long lastSend;
     int infoMode;
-    unsigned int lastRecv;
+    unsigned long lastRecv;
     bool connected = false;
     bool autoUpdate;
     bool firstRun;
-    bool tempMode; 
+    bool tempMode;
+    bool externalUpdate;
 
     String lookupByteMapValue(const String valuesMap[], const byte byteMap[], int len, byte byteValue);
     int    lookupByteMapValue(const int valuesMap[], const byte byteMap[], int len, byte byteValue);
@@ -182,6 +183,7 @@ class HeatPump
     bool connect(HardwareSerial *serial);
     bool update();
     void sync(byte packetType = PACKET_TYPE_DEFAULT);
+    void enableExternalUpdate();
     void enableAutoUpdate();
     void disableAutoUpdate();
 
@@ -196,6 +198,7 @@ class HeatPump
     void setModeSetting(String setting);
     int getTemperature();
     void setTemperature(float setting);
+    void setRemoteTemperature(float setting);
     String getFanSpeed();
     void setFanSpeed(String setting);
     String getVaneSetting();
