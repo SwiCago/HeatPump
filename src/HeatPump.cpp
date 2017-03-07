@@ -205,6 +205,34 @@ void HeatPump::setTemperature(float setting) {
   }
 }
 
+void HeatPump::setRemoteTemperature(float setting) {
+  byte packet[PACKET_LEN] = {};
+  for (int i = 0; i < 21; i++) {
+    packet[i] = 0x00;
+  } 
+  for (int i = 0; i < HEADER_LEN; i++) {
+    packet[i] = HEADER[i];
+  }
+  packet[5] = 0x07;
+  if(setting > 0) {
+    packet[6] = 0x01;
+    setting = setting * 2;
+    setting = round(setting);
+    setting = setting / 2;
+    float temp = (setting * 2) + 128;
+    packet[8] = (int)temp;
+  }
+  else {
+    packet[6] = 0x00;
+    packet[8] = 0x80; //MHK1 send 80, even though it could be 00, since ControlByte is 00
+  } 
+  // add the checksum
+  byte chkSum = checkSum(packet, 21);
+  packet[21] = chkSum;
+  while(!canSend()) { delay(10); }
+  writePacket(packet, PACKET_LEN);
+}
+
 String HeatPump::getFanSpeed() {
   return currentSettings.fan;
 }
@@ -345,12 +373,12 @@ byte HeatPump::checkSum(byte bytes[], int len) {
 }
 
 void HeatPump::createPacket(byte *packet, heatpumpSettings settings) {
-  for (int i = 0; i < HEADER_LEN; i++) {
-    packet[i] = HEADER[i];
-  }
   //preset all bytes to 0x00
   for (int i = 0; i < 21; i++) {
-    packet[i + 8] = 0x00;
+    packet[i] = 0x00;
+  }
+  for (int i = 0; i < HEADER_LEN; i++) {
+    packet[i] = HEADER[i];
   }
   if(settings.power != currentSettings.power) {
     packet[8]  = POWER[lookupByteMapIndex(POWER_MAP, 2, settings.power)];
