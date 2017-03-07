@@ -76,7 +76,7 @@ HeatPump::HeatPump() {
   autoUpdate = false;
   firstRun = true;
   tempMode = false;
-
+  externalUpdate = false;
   currentStatus = {0, false, {TIMER_MODE_MAP[0], 0, 0, 0, 0}}; // initialise to all off, then it will update shortly after connect
 }
 
@@ -138,6 +138,10 @@ void HeatPump::sync(byte packetType) {
   }
 
   readPacket(); 
+}
+
+void HeatPump::enableExternalUpdate() {
+  externalUpdate = true;
 }
 
 void HeatPump::enableAutoUpdate() {
@@ -540,7 +544,7 @@ int HeatPump::readPacket() {
               }
 
               // if this is the first time we have synced with the heatpump, set wantedSettings to receivedSettings
-              if(firstRun) {
+              if(firstRun || (autoUpdate && externalUpdate)) {
                 wantedSettings = currentSettings;
                 firstRun = false;
               }
