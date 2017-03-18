@@ -1,3 +1,5 @@
+[![Join the chat at https://gitter.im/Mitsubishi-Heat-Pump](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mitsubishi-Heat-Pump?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 HeatPump
 ----------
 Arduino library to control Mitsubishi Heat Pumps via connector cn105
@@ -62,7 +64,7 @@ Notes
 -----
 - Tested with ESP8266
 - Tested with Arduino Micro Pro / Arduino Nano
-- Tested with Mitsubishi HeatPump MSZ-FH/GE(wall units) and SEZ-KD (ducted units) [complete list](https://github.com/SwiCago/HeatPump/issues/13)
+- Tested with Mitsubishi HeatPump MSZ-FH/GE(wall units) and SEZ-KD (ducted units) [complete list](https://github.com/SwiCago/HeatPump/wiki/Supported-models)
 
 Demo Circuit
 ------------
