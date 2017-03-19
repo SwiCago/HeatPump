@@ -79,7 +79,7 @@ class MqttClimate(ClimateDevice):
             """A new MQTT message has been received."""
             parsed = json.loads(payload)
             if topic == self._state_topic:
-                self._target_temperature = int(parsed['temperature'])
+                self._target_temperature = float(parsed['temperature'])
                 self._current_fan_mode = parsed['fan']
                 self._current_swing_mode = parsed['vane']
                 if parsed['power'] == "OFF":
@@ -91,7 +91,7 @@ class MqttClimate(ClimateDevice):
                     self._current_operation = parsed['mode'] 
                     self._current_power = "ON"
             elif topic == self._temperature_state_topic:
-                self._current_temperature = int(parsed['roomTemperature'])
+                self._current_temperature = float(parsed['roomTemperature'])
             else:
                 print("unknown topic")
             self.update_ha_state()
@@ -204,6 +204,6 @@ class MqttClimate(ClimateDevice):
     def _publish_temperature(self):
         if self._target_temperature is None:
             return
-        unencoded = '{"temperature":' + str(round(self._target_temperature)) + '}'
+        unencoded = '{"temperature":' + str(round(self._target_temperature * 2) / 2.0) + '}'
         mqtt.publish(self.hass, self._command_topic, unencoded,
                      self._qos, self._retain)

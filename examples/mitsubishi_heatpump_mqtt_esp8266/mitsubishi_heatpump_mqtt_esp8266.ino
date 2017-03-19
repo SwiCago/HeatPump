@@ -52,7 +52,7 @@ void setup() {
     ArduinoOTA.begin();
   #endif
   
-  while(!hp.connect(&Serial)) { }
+  hp.connect(&Serial);
 
   lastTempSend = millis();
 }
@@ -174,7 +174,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     }
 
     if (root.containsKey("temperature")) {
-      int temperature = root["temperature"];
+      float temperature = root["temperature"];
       hp.setTemperature(temperature);
     }
 
