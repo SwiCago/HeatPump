@@ -196,7 +196,7 @@ class HeatPump
     void setPowerSetting(String setting);
     String getModeSetting();
     void setModeSetting(String setting);
-    int getTemperature();
+    float getTemperature();
     void setTemperature(float setting);
     void setRemoteTemperature(float setting);
     String getFanSpeed();
