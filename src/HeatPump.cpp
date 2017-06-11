@@ -273,14 +273,14 @@ bool HeatPump::getOperating() {
   return currentStatus.operating;
 }
 
-unsigned int HeatPump::FahrenheitToCelsius(unsigned int tempF) {
-  double temp = (tempF - 32) / 1.8;                //round up if heat, down if cool or any other mode
-  return currentSettings.mode == MODE_MAP[0] ? ceil(temp) : floor(temp);
+float HeatPump::FahrenheitToCelsius(int tempF) {
+  float temp = (tempF - 32) / 1.8;                
+  return ((float)round(temp*2))/2;                 //Round to nearest 0.5C
 }
 
-unsigned int HeatPump::CelsiusToFahrenheit(unsigned int tempC) {
-  double temp = (tempC * 1.8) + 32;                //round up if heat, down if cool or any other mode
-  return currentSettings.mode == MODE_MAP[0] ? ceil(temp) : floor(temp);
+int HeatPump::CelsiusToFahrenheit(float tempC) {
+  float temp = (tempC * 1.8) + 32;                //round up if heat, down if cool or any other mode
+  return (int)(temp + 0.5);
 }
 
 void HeatPump::setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE) {
