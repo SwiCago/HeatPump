@@ -118,7 +118,7 @@ bool change_states() {
       updated = true;
     }
     if (server.hasArg("TEMP")) {
-      hp.setTemperature(server.arg("TEMP").toInt());
+      hp.setTemperature(server.arg("TEMP").toFloat());
       updated = true;
     }
     if (server.hasArg("FAN")) {
