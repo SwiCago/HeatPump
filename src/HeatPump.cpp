@@ -189,13 +189,13 @@ void HeatPump::setModeSetting(String setting) {
   wantedSettings.mode = lookupByteMapIndex(MODE_MAP, 5, setting) > -1 ? setting : MODE_MAP[0];
 }
 
-int HeatPump::getTemperature() {
+float HeatPump::getTemperature() {
   return currentSettings.temperature;
 }
 
 void HeatPump::setTemperature(float setting) {
   if(!tempMode){
-    wantedSettings.temperature = lookupByteMapIndex(TEMP_MAP, 16, setting) > -1 ? setting : TEMP_MAP[0];
+    wantedSettings.temperature = lookupByteMapIndex(TEMP_MAP, 16, (int)(temp + 0.5)) > -1 ? setting : TEMP_MAP[0];
   }
   else {
     setting = setting * 2;
