@@ -213,8 +213,8 @@ class HeatPump
     bool getOperating();
 
     // helpers
-    unsigned int FahrenheitToCelsius(unsigned int tempF);
-    unsigned int CelsiusToFahrenheit(unsigned int tempC);
+    float FahrenheitToCelsius(int tempF);
+    int CelsiusToFahrenheit(float tempC);
 
     // callbacks
     void setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE);
