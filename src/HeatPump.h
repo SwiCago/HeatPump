@@ -180,7 +180,7 @@ class HeatPump
 
     // general
     HeatPump();
-    bool connect(HardwareSerial *serial);
+    bool connect(HardwareSerial *serial, bool swapSerial);
     bool update();
     void sync(byte packetType = PACKET_TYPE_DEFAULT);
     void enableExternalUpdate();
