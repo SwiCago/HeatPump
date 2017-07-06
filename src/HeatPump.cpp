@@ -90,9 +90,9 @@ void HeatPump::serial(HardwareSerial *serial) {
   connected = false;
 }
 
-bool HeatPump::connect(HardwareSerial *serial = NULL) {
+bool HeatPump::connect(HardwareSerial *serial) {
   if(serial != NULL) {
-    serial(serial);
+    this->serial(serial);
   }
   
   // settle before we start sending packets
