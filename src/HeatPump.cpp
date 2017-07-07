@@ -82,12 +82,18 @@ HeatPump::HeatPump() {
 
 // Public Methods //////////////////////////////////////////////////////////////
 
-bool HeatPump::connect(HardwareSerial *serial) {
+void HeatPump::serial(HardwareSerial *serial) {
   if(serial != NULL) {
     _HardSerial = serial;
+    _HardSerial->begin(2400, SERIAL_8E1);
   }
   connected = false;
-  _HardSerial->begin(2400, SERIAL_8E1);
+}
+
+bool HeatPump::connect(HardwareSerial *serial) {
+  if(serial != NULL) {
+    this->serial(serial);
+  }
   
   // settle before we start sending packets
   delay(2000);
