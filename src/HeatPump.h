@@ -34,11 +34,13 @@
  */
 #ifdef ESP8266
 #include <functional>
+#define ON_CONNECT_CALLBACK_SIGNATURE std::function<void()> onConnectCallback
 #define SETTINGS_CHANGED_CALLBACK_SIGNATURE std::function<void()> settingsChangedCallback
 #define STATUS_CHANGED_CALLBACK_SIGNATURE std::function<void(heatpumpStatus newStatus)> statusChangedCallback
 #define PACKET_CALLBACK_SIGNATURE std::function<void(byte* packet, unsigned int length, char* packetDirection)> packetCallback
 #define ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE std::function<void(float currentRoomTemperature)> roomTempChangedCallback
 #else
+#define ON_CONNECT_CALLBACK_SIGNATURE void (*onConnectCallback)()
 #define SETTINGS_CHANGED_CALLBACK_SIGNATURE void (*settingsChangedCallback)()
 #define STATUS_CHANGED_CALLBACK_SIGNATURE void (*statusChangedCallback)(heatpumpStatus newStatus)
 #define PACKET_CALLBACK_SIGNATURE void (*packetCallback)(byte* packet, unsigned int length, char* packetDirection)
@@ -83,6 +85,7 @@ class HeatPump
   private:
     static const int PACKET_LEN = 22;
     static const int PACKET_SENT_INTERVAL_MS = 1000;
+    static const int PACKET_INFO_INTERVAL_MS = 2000;
     static const int PACKET_TYPE_DEFAULT = 99;
 
     static const int CONNECT_LEN = 8;
@@ -157,7 +160,7 @@ class HeatPump
     int    lookupByteMapIndex(const String valuesMap[], int len, String lookupValue);
     int    lookupByteMapIndex(const int valuesMap[], int len, int lookupValue);
 
-    bool canSend();
+    bool canSend(bool isInfo);
     byte checkSum(byte bytes[], int len);
     void createPacket(byte *packet, heatpumpSettings settings);
     void createInfoPacket(byte *packet, byte packetType);
@@ -165,6 +168,7 @@ class HeatPump
     void writePacket(byte *packet, int length);
 
     // callbacks
+    ON_CONNECT_CALLBACK_SIGNATURE;
     SETTINGS_CHANGED_CALLBACK_SIGNATURE;
     STATUS_CHANGED_CALLBACK_SIGNATURE;
     PACKET_CALLBACK_SIGNATURE;
@@ -217,6 +221,7 @@ class HeatPump
     int CelsiusToFahrenheit(float tempC);
 
     // callbacks
+    void setOnConnectCallback(ON_CONNECT_CALLBACK_SIGNATURE);
     void setSettingsChangedCallback(SETTINGS_CHANGED_CALLBACK_SIGNATURE);
     void setStatusChangedCallback(STATUS_CHANGED_CALLBACK_SIGNATURE);
     void setPacketCallback(PACKET_CALLBACK_SIGNATURE);
