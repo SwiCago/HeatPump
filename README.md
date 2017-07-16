@@ -77,6 +77,8 @@ Demo Circuit
 - SPHD-002T-P0.5  CONN TERM PHD CRIMP 24-28AWG TIN  
   - Digi-Key Part Number 	455-1313-1-ND 
   - https://www.digikey.com/product-detail/en/jst-sales-america-inc/SPHD-002T-P0.5/455-1313-1-ND/608809
+- Premade pigtails
+  - http://www.usastore.revolectrix.com/Products_2/Cellpro-4s-Charge-Adapters_2/Cellpro-JST-PA-Battery-Pigtail-10-5-Position
 - ESP-01 module (4pk)
   - https://www.amazon.com/gp/product/B01EA3UJJ4/
 - Cheap 5V to 3.3V regulator (10pk), for those that don't want to make one
