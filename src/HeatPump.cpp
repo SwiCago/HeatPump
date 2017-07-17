@@ -88,7 +88,9 @@ bool HeatPump::connect(HardwareSerial *serial) {
   }
   connected = false;
   _HardSerial->begin(2400, SERIAL_8E1);
-  onConnectCallback();
+  if(onConnectCallback) {
+    onConnectCallback();
+  }
   
   // settle before we start sending packets
   delay(2000);
