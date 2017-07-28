@@ -19,6 +19,7 @@
 #ifndef __HeatPump_H__
 #define __HeatPump_H__
 #include <stdint.h>
+#include <WString.h>
 #include <math.h>
 #include <HardwareSerial.h>
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -27,7 +28,7 @@
 #include "WProgram.h"
 #endif
 
-/*
+/* 
  * Callback function definitions. Code differs for the ESP8266 platform, which requires the functional library.
  * Based on callback implementation in the Arduino Client for MQTT library (https://github.com/knolleary/pubsubclient)
  */
@@ -49,20 +50,21 @@
 typedef uint8_t byte;
 
 struct heatpumpSettings {
-  char* power;
-  char* mode;
+  String power;
+  String mode;
   float temperature;
-  char* fan;
-  char* vane; //vertical vane, up/down
-  char* wideVane; //horizontal vane, left/right
+  String fan;
+  String vane; //vertical vane, up/down
+  String wideVane; //horizontal vane, left/right
   bool iSee;   //iSee sensor, at the moment can only detect it, not set it
+  bool connected;
 };
 
 bool operator==(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
 bool operator!=(const heatpumpSettings& lhs, const heatpumpSettings& rhs);
 
 struct heatpumpTimers {
-  char* mode;
+  String mode;
   int onMinutesSet;
   int onMinutesRemaining;
   int offMinutesSet;
@@ -79,7 +81,7 @@ struct heatpumpStatus {
 };
 
 class HeatPump
-{   
+{
   private:
     static const int PACKET_LEN = 22;
     static const int PACKET_SENT_INTERVAL_MS = 1000;
@@ -93,7 +95,7 @@ class HeatPump
 
     const byte INFOHEADER[5]  = {0xfc, 0x42, 0x01, 0x30, 0x10};
     static const int INFOHEADER_LEN  = 5;
-
+ 
     static const int INFOMODE_LEN = 6;
     const byte INFOMODE[INFOMODE_LEN] = {
       0x02, // request a settings packet - RQST_PKT_SETTINGS
@@ -112,6 +114,29 @@ class HeatPump
     const int RCVD_PKT_STATUS          = 5;
     const int RCVD_PKT_TIMER           = 6;
 
+    const byte CONTROL_PACKET_1[5] = {0x01,    0x02,  0x04,  0x08, 0x10};
+                                   //{"POWER","MODE","TEMP","FAN","VANE"};
+    const byte CONTROL_PACKET_2[1] = {0x01};
+                                   //{"WIDEVANE"};
+    const byte POWER[2]            = {0x00, 0x01};
+    const String POWER_MAP[2]      = {"OFF", "ON"};
+    const byte MODE[5]             = {0x01,   0x02,  0x03, 0x07, 0x08};
+    const String MODE_MAP[5]       = {"HEAT", "DRY", "COOL", "FAN", "AUTO"};
+    const byte TEMP[16]            = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    const int TEMP_MAP[16]         = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16};
+    const byte FAN[6]              = {0x00,  0x01,   0x02, 0x03, 0x05, 0x06};
+    const String FAN_MAP[6]        = {"AUTO", "QUIET", "1", "2", "3", "4"};
+    const byte VANE[7]             = {0x00,  0x01, 0x02, 0x03, 0x04, 0x05, 0x07};
+    const String VANE_MAP[7]       = {"AUTO", "1", "2", "3", "4", "5", "SWING"};
+    const byte WIDEVANE[7]         = {0x01, 0x02, 0x03, 0x04, 0x05, 0x08, 0x0c};
+    const String WIDEVANE_MAP[7]   = {"<<", "<",  "|",  ">",  ">>", "<>", "SWING"};
+    const byte ROOM_TEMP[32]       = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+                                      0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+    const int ROOM_TEMP_MAP[32]    = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                      26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41};
+    const byte TIMER_MODE[4]       = {0x00,  0x01,  0x02, 0x03};
+    const String TIMER_MODE_MAP[4] = {"NONE", "OFF", "ON", "BOTH"};
+
     static const int TIMER_INCREMENT_MINUTES = 10;
 
     // these settings will be initialised in connect()
@@ -119,7 +144,7 @@ class HeatPump
     heatpumpSettings wantedSettings;
 
     heatpumpStatus currentStatus;
-
+  
     HardwareSerial * _HardSerial;
     unsigned long lastSend;
     int infoMode;
@@ -129,6 +154,11 @@ class HeatPump
     bool firstRun;
     bool tempMode;
     bool externalUpdate;
+
+    String lookupByteMapValue(const String valuesMap[], const byte byteMap[], int len, byte byteValue);
+    int    lookupByteMapValue(const int valuesMap[], const byte byteMap[], int len, byte byteValue);
+    int    lookupByteMapIndex(const String valuesMap[], int len, String lookupValue);
+    int    lookupByteMapIndex(const int valuesMap[], int len, int lookupValue);
 
     bool canSend(bool isInfo);
     byte checkSum(byte bytes[], int len);
@@ -146,39 +176,11 @@ class HeatPump
 
   public:
     // indexes for INFOMODE array (public so they can be optionally passed to sync())
-    static const int RQST_PKT_SETTINGS  = 0;
-    static const int RQST_PKT_ROOM_TEMP = 1;
-    static const int RQST_PKT_TIMERS    = 3;
-    static const int RQST_PKT_STATUS    = 4;
-    static const int RQST_PKT_STANDBY   = 5;
-    
-    static const byte CONTROL_PACKET_1[5];
-    static const byte CONTROL_PACKET_2[1];
-    
-    static const byte POWER[2];
-    static const char* POWER_MAP[2];
-    static const byte MODE[5];
-    static const char* MODE_MAP[5];
-    static const byte TEMP[16];
-    static const int TEMP_MAP[16];
-    static const byte FAN[6];
-    static const char* FAN_MAP[6];
-    static const byte VANE[7];
-    static const char* VANE_MAP[7];
-    static const byte WIDEVANE[7];
-    static const char* WIDEVANE_MAP[7];
-    static const byte ROOM_TEMP[32];
-    static const int ROOM_TEMP_MAP[32];
-    
-    static const byte TIMER_MODE[4];
-    static const char* TIMER_MODE_MAP[4];
-
-    static const char* lookupByteMapValue(const char* valuesMap[], const byte byteMap[], int len, byte byteValue);
-    static int lookupByteMapValue(const int valuesMap[], const byte byteMap[], int len, byte byteValue);
-    static bool lookupByteMapValue(const bool valuesMap[], const byte byteMap[], int len, byte byteValue);
-    static int lookupByteMapIndex(const char* valuesMap[], int len, const char* lookupValue);
-    static int lookupByteMapIndex(const int valuesMap[], int len, int lookupValue);
-    static int lookupByteMapIndex(const bool valuesMap[], int len, bool lookupValue);
+    const int RQST_PKT_SETTINGS  = 0;
+    const int RQST_PKT_ROOM_TEMP = 1;
+    const int RQST_PKT_TIMERS    = 2;
+    const int RQST_PKT_STATUS    = 3;
+    const int RQST_PKT_STANDBY   = 4;
 
     // general
     HeatPump();
@@ -193,20 +195,20 @@ class HeatPump
     heatpumpSettings getSettings();
     void setSettings(heatpumpSettings settings);
     void setPowerSetting(bool setting);
-    bool getPowerSettingBool();
-    char* getPowerSetting();
-    void setPowerSetting(char* setting);
-    char* getModeSetting();
-    void setModeSetting(char* setting);
+    bool getPowerSettingBool(); 
+    String getPowerSetting();
+    void setPowerSetting(String setting);
+    String getModeSetting();
+    void setModeSetting(String setting);
     float getTemperature();
     void setTemperature(float setting);
     void setRemoteTemperature(float setting);
-    char* getFanSpeed();
-    void setFanSpeed(char* setting);
-    char* getVaneSetting();
-    void setVaneSetting(char* setting);
-    char* getWideVaneSetting();
-    void setWideVaneSetting(char* setting);
+    String getFanSpeed();
+    void setFanSpeed(String setting);
+    String getVaneSetting();
+    void setVaneSetting(String setting);
+    String getWideVaneSetting();
+    void setWideVaneSetting(String setting);
     bool getIseeBool();
 
     // status
@@ -226,6 +228,7 @@ class HeatPump
     void setRoomTempChangedCallback(ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE); // need to deprecate this, is available from setStatusChangedCallback
 
     // expert users only!
-    void sendCustomPacket(byte data[], int len);
+    void sendCustomPacket(byte data[], int len); 
+
 };
 #endif
