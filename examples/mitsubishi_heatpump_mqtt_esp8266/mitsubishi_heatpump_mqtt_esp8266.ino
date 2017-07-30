@@ -170,7 +170,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
     if (root.containsKey("mode")) {
       String mode = root["mode"];
-      hp.setModeSetting(mode);
+      hp.setModeSetting(mode.c_str());
     }
 
     if (root.containsKey("temperature")) {
@@ -180,17 +180,17 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
     if (root.containsKey("fan")) {
       String fan = root["fan"];
-      hp.setFanSpeed(fan);
+      hp.setFanSpeed(fan.c_str());
     }
 
     if (root.containsKey("vane")) {
       String vane = root["vane"];
-      hp.setVaneSetting(vane);
+      hp.setVaneSetting(vane.c_str());
     }
 
     if (root.containsKey("wideVane")) {
       String wideVane = root["wideVane"];
-      hp.setWideVaneSetting(wideVane);
+      hp.setWideVaneSetting(wideVane.c_str());
     }
 
     if(root.containsKey("remoteTemp")) {

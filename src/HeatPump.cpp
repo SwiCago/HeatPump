@@ -21,29 +21,29 @@
 // Structures //////////////////////////////////////////////////////////////////
 
 bool operator==(const heatpumpSettings& lhs, const heatpumpSettings& rhs) {
-  return lhs.power == rhs.power && 
-         lhs.mode == rhs.mode && 
-         lhs.temperature == rhs.temperature && 
-         lhs.fan == rhs.fan &&
-         lhs.vane == rhs.vane &&
-         lhs.wideVane == rhs.wideVane &&
-         lhs.iSee == rhs.iSee; 
+  return strcmp(lhs.power, rhs.power) == 0 &&
+         strcmp(lhs.mode, rhs.mode) == 0 &&
+         lhs.temperature == rhs.temperature &&
+         strcmp(lhs.fan, rhs.fan) == 0 &&
+         strcmp(lhs.vane, rhs.vane) == 0 &&
+         strcmp(lhs.wideVane, rhs.wideVane) == 0 &&
+         lhs.iSee == rhs.iSee;
 }
 
 bool operator!=(const heatpumpSettings& lhs, const heatpumpSettings& rhs) {
-  return lhs.power != rhs.power || 
-         lhs.mode != rhs.mode || 
-         lhs.temperature != rhs.temperature || 
-         lhs.fan != rhs.fan ||
-         lhs.vane != rhs.vane ||
-         lhs.wideVane != rhs.wideVane ||
+  return strcmp(lhs.power, rhs.power) != 0 ||
+         strcmp(lhs.mode, rhs.mode) != 0 ||
+         lhs.temperature != rhs.temperature ||
+         strcmp(lhs.fan, rhs.fan) != 0 ||
+         strcmp(lhs.vane, rhs.vane) != 0 ||
+         strcmp(lhs.wideVane, rhs.wideVane) != 0 ||
          lhs.iSee != rhs.iSee;
 }
 
 bool operator!(const heatpumpSettings& settings) {
-  return !settings.power && 
-         !settings.mode && 
-         !settings.temperature && 
+  return !settings.power &&
+         !settings.mode &&
+         !settings.temperature &&
          !settings.fan &&
          !settings.vane &&
          !settings.wideVane &&
@@ -51,21 +51,43 @@ bool operator!(const heatpumpSettings& settings) {
 }
 
 bool operator==(const heatpumpTimers& lhs, const heatpumpTimers& rhs) {
-  return lhs.mode                == rhs.mode && 
+  return strcmp(lhs.mode, rhs.mode) == 0 &&
          lhs.onMinutesSet        == rhs.onMinutesSet &&
          lhs.onMinutesRemaining  == rhs.onMinutesRemaining &&
          lhs.offMinutesSet       == rhs.offMinutesSet &&
-         lhs.offMinutesRemaining == rhs.offMinutesRemaining; 
+         lhs.offMinutesRemaining == rhs.offMinutesRemaining;
 }
 
 bool operator!=(const heatpumpTimers& lhs, const heatpumpTimers& rhs) {
-  return lhs.mode                != rhs.mode || 
+  return strcmp(lhs.mode, rhs.mode) != 0 ||
          lhs.onMinutesSet        != rhs.onMinutesSet ||
          lhs.onMinutesRemaining  != rhs.onMinutesRemaining ||
          lhs.offMinutesSet       != rhs.offMinutesSet ||
          lhs.offMinutesRemaining != rhs.offMinutesRemaining;
 }
 
+const byte HeatPump::CONTROL_PACKET_1[5] = {0x01,    0x02,  0x04,  0x08, 0x10};
+                                         //{"POWER","MODE","TEMP","FAN","VANE"};
+const byte HeatPump::CONTROL_PACKET_2[1] = {0x01};
+                                         //{"WIDEVANE"};
+const byte HeatPump::POWER[2]            = {0x00, 0x01};
+const char* HeatPump::POWER_MAP[2]       = {"OFF", "ON"};
+const byte HeatPump::MODE[5]             = {0x01,   0x02,  0x03, 0x07, 0x08};
+const char* HeatPump::MODE_MAP[5]        = {"HEAT", "DRY", "COOL", "FAN", "AUTO"};
+const byte HeatPump::TEMP[16]            = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+const int HeatPump::TEMP_MAP[16]         = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16};
+const byte HeatPump::FAN[6]              = {0x00,  0x01,   0x02, 0x03, 0x05, 0x06};
+const char* HeatPump::FAN_MAP[6]         = {"AUTO", "QUIET", "1", "2", "3", "4"};
+const byte HeatPump::VANE[7]             = {0x00,  0x01, 0x02, 0x03, 0x04, 0x05, 0x07};
+const char* HeatPump::VANE_MAP[7]        = {"AUTO", "1", "2", "3", "4", "5", "SWING"};
+const byte HeatPump::WIDEVANE[7]         = {0x01, 0x02, 0x03, 0x04, 0x05, 0x08, 0x0c};
+const char* HeatPump::WIDEVANE_MAP[7]    = {"<<", "<",  "|",  ">",  ">>", "<>", "SWING"};
+const byte HeatPump::ROOM_TEMP[32]       = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+                                            0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f};
+const int HeatPump::ROOM_TEMP_MAP[32]    = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+                                            26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41};
+const byte HeatPump::TIMER_MODE[4]       = {0x00, 0x01, 0x02, 0x03};
+const char* HeatPump::TIMER_MODE_MAP[4]  = {"NONE", "OFF", "ON", "BOTH"};
 
 // Constructor /////////////////////////////////////////////////////////////////
 
@@ -77,7 +99,7 @@ HeatPump::HeatPump() {
   firstRun = true;
   tempMode = false;
   externalUpdate = false;
-  currentStatus = {0, false, {TIMER_MODE_MAP[0], 0, 0, 0, 0}}; // initialise to all off, then it will update shortly after connect
+  currentStatus = {0, false, {"NONE", 0, 0, 0, 0}}; // initialise to all off, then it will update shortly after connect
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -111,9 +133,9 @@ bool HeatPump::update() {
   byte packet[PACKET_LEN] = {};
   createPacket(packet, wantedSettings);
   writePacket(packet, PACKET_LEN);
-  
+
   int packetType = readPacket();
-  
+
   if(packetType == RCVD_PKT_UPDATE_SUCCESS) {
     // call sync() to get the latest settings from the heatpump, which should now have the updated settings
     sync(RQST_PKT_SETTINGS);
@@ -129,7 +151,7 @@ void HeatPump::sync(byte packetType) {
     connect(NULL);
   }
   else if(autoUpdate && !firstRun && wantedSettings != currentSettings && packetType == PACKET_TYPE_DEFAULT) {
-     update(); 
+     update();
   }
   else if(canSend(true)) {
     byte packet[PACKET_LEN] = {};
@@ -137,7 +159,7 @@ void HeatPump::sync(byte packetType) {
     writePacket(packet, PACKET_LEN);
   }
 
-  readPacket(); 
+  readPacket();
 }
 
 void HeatPump::enableExternalUpdate() {
@@ -173,19 +195,19 @@ void HeatPump::setPowerSetting(bool setting) {
   wantedSettings.power = lookupByteMapIndex(POWER_MAP, 2, POWER_MAP[setting ? 1 : 0]) > -1 ? POWER_MAP[setting ? 1 : 0] : POWER_MAP[0];
 }
 
-String HeatPump::getPowerSetting() {
+const char* HeatPump::getPowerSetting() {
   return currentSettings.power;
 }
 
-void HeatPump::setPowerSetting(String setting) {
+void HeatPump::setPowerSetting(const char* setting) {
   wantedSettings.power = lookupByteMapIndex(POWER_MAP, 2, setting) > -1 ? setting : POWER_MAP[0];
 }
 
-String HeatPump::getModeSetting() {
+const char* HeatPump::getModeSetting() {
   return currentSettings.mode;
 }
 
-void HeatPump::setModeSetting(String setting) {
+void HeatPump::setModeSetting(const char* setting) {
   wantedSettings.mode = lookupByteMapIndex(MODE_MAP, 5, setting) > -1 ? setting : MODE_MAP[0];
 }
 
@@ -209,7 +231,7 @@ void HeatPump::setRemoteTemperature(float setting) {
   byte packet[PACKET_LEN] = {};
   for (int i = 0; i < 21; i++) {
     packet[i] = 0x00;
-  } 
+  }
   for (int i = 0; i < HEADER_LEN; i++) {
     packet[i] = HEADER[i];
   }
@@ -225,7 +247,7 @@ void HeatPump::setRemoteTemperature(float setting) {
   else {
     packet[6] = 0x00;
     packet[8] = 0x80; //MHK1 send 80, even though it could be 00, since ControlByte is 00
-  } 
+  }
   // add the checksum
   byte chkSum = checkSum(packet, 21);
   packet[21] = chkSum;
@@ -233,27 +255,27 @@ void HeatPump::setRemoteTemperature(float setting) {
   writePacket(packet, PACKET_LEN);
 }
 
-String HeatPump::getFanSpeed() {
+const char* HeatPump::getFanSpeed() {
   return currentSettings.fan;
 }
 
-void HeatPump::setFanSpeed(String setting) {
+void HeatPump::setFanSpeed(const char* setting) {
   wantedSettings.fan = lookupByteMapIndex(FAN_MAP, 6, setting) > -1 ? setting : FAN_MAP[0];
 }
 
-String HeatPump::getVaneSetting() {
+const char* HeatPump::getVaneSetting() {
   return currentSettings.vane;
 }
 
-void HeatPump::setVaneSetting(String setting) {
+void HeatPump::setVaneSetting(const char* setting) {
   wantedSettings.vane = lookupByteMapIndex(VANE_MAP, 7, setting) > -1 ? setting : VANE_MAP[0];
 }
 
-String HeatPump::getWideVaneSetting() {
+const char* HeatPump::getWideVaneSetting() {
   return currentSettings.wideVane;
 }
 
-void HeatPump::setWideVaneSetting(String setting) {
+void HeatPump::setWideVaneSetting(const char* setting) {
   wantedSettings.wideVane = lookupByteMapIndex(WIDEVANE_MAP, 7, setting) > -1 ? setting : WIDEVANE_MAP[0];
 }
 
@@ -274,7 +296,7 @@ bool HeatPump::getOperating() {
 }
 
 float HeatPump::FahrenheitToCelsius(int tempF) {
-  float temp = (tempF - 32) / 1.8;                
+  float temp = (tempF - 32) / 1.8;
   return ((float)round(temp*2))/2;                 //Round to nearest 0.5C
 }
 
@@ -314,7 +336,7 @@ void HeatPump::sendCustomPacket(byte data[], int packetLength) {
 
   // add data
   for (int i = 0; i < packetLength; i++) {
-    packet[(i+1)] = data[i]; 
+    packet[(i+1)] = data[i];
   }
 
   // add checksum
@@ -335,7 +357,16 @@ int HeatPump::lookupByteMapIndex(const int valuesMap[], int len, int lookupValue
   return -1;
 }
 
-int HeatPump::lookupByteMapIndex(const String valuesMap[], int len, String lookupValue) {
+int HeatPump::lookupByteMapIndex(const char* valuesMap[], int len, const char* lookupValue) {
+  for (int i = 0; i < len; i++) {
+    if (strcmp(valuesMap[i], lookupValue) == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+int HeatPump::lookupByteMapIndex(const bool valuesMap[], int len, bool lookupValue) {
   for (int i = 0; i < len; i++) {
     if (valuesMap[i] == lookupValue) {
       return i;
@@ -344,8 +375,7 @@ int HeatPump::lookupByteMapIndex(const String valuesMap[], int len, String looku
   return -1;
 }
 
-
-String HeatPump::lookupByteMapValue(const String valuesMap[], const byte byteMap[], int len, byte byteValue) {
+const char* HeatPump::lookupByteMapValue(const char* valuesMap[], const byte byteMap[], int len, byte byteValue) {
   for (int i = 0; i < len; i++) {
     if (byteMap[i] == byteValue) {
       return valuesMap[i];
@@ -363,9 +393,18 @@ int HeatPump::lookupByteMapValue(const int valuesMap[], const byte byteMap[], in
   return valuesMap[0];
 }
 
+bool HeatPump::lookupByteMapValue(const bool valuesMap[], const byte byteMap[], int len, byte byteValue) {
+  for (int i = 0; i < len; i++) {
+    if (byteMap[i] == byteValue) {
+      return valuesMap[i];
+    }
+  }
+  return valuesMap[0];
+}
+
 bool HeatPump::canSend(bool isInfo) {
-  return (millis() - (isInfo ? PACKET_INFO_INTERVAL_MS : PACKET_SENT_INTERVAL_MS)) > lastSend;
-}  
+  return (millis() - (isInfo ? PACKET_INFO_INTERVAL_MS : PACKET_SENT_INTERVAL_MS)) > lastSend; 
+}
 
 byte HeatPump::checkSum(byte bytes[], int len) {
   byte sum = 0;
@@ -422,13 +461,13 @@ void HeatPump::createInfoPacket(byte *packet, byte packetType) {
   for (int i = 0; i < INFOHEADER_LEN; i++) {
     packet[i] = INFOHEADER[i];
   }
-  
+
   // set the mode - settings or room temperature
   if(packetType != PACKET_TYPE_DEFAULT) {
     packet[5] = INFOMODE[packetType];
   } else {
     // request current infoMode, and increment for the next request
-    packet[5] = INFOMODE[infoMode]; 
+    packet[5] = INFOMODE[infoMode];
     infoMode = (infoMode == (INFOMODE_LEN - 1)) ? 0 : infoMode += 1;
   }
 
@@ -461,7 +500,7 @@ int HeatPump::readPacket() {
   int dataSum = 0;
   byte checksum = 0;
   byte dataLength = 0;
-  
+
   if(_HardSerial->available() > 0) {
     // read until we get start byte 0xfc
     while(_HardSerial->available() > 0 && !foundStart) {
@@ -475,23 +514,23 @@ int HeatPump::readPacket() {
     if(!foundStart) {
       return RCVD_PKT_FAIL;
     }
-    
+
     //read header
     for(int i=1;i<5;i++) {
       header[i] =  _HardSerial->read();
     }
-    
+
     //check header
     if(header[0] == HEADER[0] && header[2] == HEADER[2] && header[3] == HEADER[3]) {
       dataLength = header[4];
-      
+
       for(int i=0;i<dataLength;i++) {
         data[i] = _HardSerial->read();
       }
-  
+
       // read checksum byte
       data[dataLength] = _HardSerial->read();
-  
+
       // sum up the header bytes...
       for (int i = 0; i < INFOHEADER_LEN; i++) {
         dataSum += header[i];
@@ -501,10 +540,10 @@ int HeatPump::readPacket() {
       for (int i = 0; i < dataLength; i++) {
         dataSum += data[i];
       }
-  
+
       // calculate checksum
       checksum = (0xfc - dataSum) & 0xff;
-      
+
       if(data[dataLength] == checksum) {
         lastRecv = millis();
         if(packetCallback) {
@@ -537,8 +576,8 @@ int HeatPump::readPacket() {
 
               receivedSettings.fan         = lookupByteMapValue(FAN_MAP, FAN, 6, data[6]);
               receivedSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
-              receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);   
-              
+              receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);
+
               if(settingsChangedCallback && receivedSettings != currentSettings) {
                 currentSettings = receivedSettings;
                 settingsChangedCallback();
@@ -585,7 +624,7 @@ int HeatPump::readPacket() {
             }
 
             case 0x04: { // unknown
-                break; 
+                break;
             }
 
             case 0x05: { // timer packet
@@ -626,12 +665,12 @@ int HeatPump::readPacket() {
             case 0x09: { // standby mode maybe?
               break;
             }
-          } 
-        } 
-        
-        if(header[1] == 0x61) { //Last update was successful 
+          }
+        }
+
+        if(header[1] == 0x61) { //Last update was successful
           return RCVD_PKT_UPDATE_SUCCESS;
-        } else if(header[1] == 0x7a) { //Last update was successful 
+        } else if(header[1] == 0x7a) { //Last update was successful
           connected = true;
           return RCVD_PKT_CONNECT_SUCCESS;
         }

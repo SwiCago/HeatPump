@@ -163,7 +163,7 @@ heatpumpSettings change_states(heatpumpSettings settings) {
       update = true;
     }
     if (server.hasArg("MODE")) {
-      settings.mode=server.arg("MODE");
+      settings.mode=server.arg("MODE").c_str();
       update = true;
     }
     if (server.hasArg("TEMP")) {
@@ -171,15 +171,15 @@ heatpumpSettings change_states(heatpumpSettings settings) {
       update = true;
     }
     if (server.hasArg("FAN")) {
-      settings.fan=server.arg("FAN");
+      settings.fan=server.arg("FAN").c_str();
       update = true;
     }
     if (server.hasArg("VANE")) {
-      settings.vane=server.arg("VANE");
+      settings.vane=server.arg("VANE").c_str();
       update = true;
     }
     if (server.hasArg("WIDEVANE")) {
-      settings.wideVane=server.arg("WIDEVANE");
+      settings.wideVane=server.arg("WIDEVANE").c_str();
       update = true;
     }
     if(update) {
