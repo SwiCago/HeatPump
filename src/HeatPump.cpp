@@ -450,8 +450,16 @@ void HeatPump::writePacket(byte *packet, int length) {
   if(packetCallback) {
     packetCallback(packet, length, (char*)"packetSent");
   }
-  delay(1000);
   lastSend = millis();
+}
+
+byte HeatPump::readByte() {
+  for (unsigned attempt = 0; attempt < 100; attempt++) {
+    if (_HardSerial->available() > 0)
+      break;
+    delay(10);
+  }
+  return _HardSerial->read();
 }
 
 int HeatPump::readPacket() {
@@ -461,184 +469,195 @@ int HeatPump::readPacket() {
   int dataSum = 0;
   byte checksum = 0;
   byte dataLength = 0;
-  
-  if(_HardSerial->available() > 0) {
-    // read until we get start byte 0xfc
-    while(_HardSerial->available() > 0 && !foundStart) {
-      header[0] = _HardSerial->read();
-      if(header[0] == HEADER[0]) {
-        foundStart = true;
-        delay(100); // found that this delay increases accuracy when reading, might not be needed though
-      }
-    }
+  unsigned long start = millis();
 
-    if(!foundStart) {
-      return RCVD_PKT_FAIL;
-    }
-    
-    //read header
-    for(int i=1;i<5;i++) {
-      header[i] =  _HardSerial->read();
-    }
-    
-    //check header
-    if(header[0] == HEADER[0] && header[2] == HEADER[2] && header[3] == HEADER[3]) {
-      dataLength = header[4];
-      
-      for(int i=0;i<dataLength;i++) {
-        data[i] = _HardSerial->read();
-      }
-  
-      // read checksum byte
-      data[dataLength] = _HardSerial->read();
-  
-      // sum up the header bytes...
-      for (int i = 0; i < INFOHEADER_LEN; i++) {
-        dataSum += header[i];
-      }
-
-      // ...and add to that the sum of the data bytes
-      for (int i = 0; i < dataLength; i++) {
-        dataSum += data[i];
-      }
-  
-      // calculate checksum
-      checksum = (0xfc - dataSum) & 0xff;
-      
-      if(data[dataLength] == checksum) {
-        lastRecv = millis();
-        if(packetCallback) {
-          byte packet[37]; // we are going to put header[5] and data[32] into this, so the whole packet is sent to the callback
-          for(int i=0; i<INFOHEADER_LEN; i++) {
-            packet[i] = header[i];
-          }
-          for(int i=0; i<(dataLength+1); i++) { //must be dataLength+1 to pick up checksum byte
-            packet[(i+5)] = data[i];
-          }
-          packetCallback(packet, PACKET_LEN, (char*)"packetRecv");
-        }
-
-        if(header[1] == 0x62) {
-          switch(data[0]) {
-            case 0x02: { // setting information
-              heatpumpSettings receivedSettings;
-              receivedSettings.power       = lookupByteMapValue(POWER_MAP, POWER, 2, data[3]);
-              receivedSettings.iSee = data[4] > 0x08 ? true : false;
-              receivedSettings.mode = lookupByteMapValue(MODE_MAP, MODE, 5, receivedSettings.iSee  ? (data[4] - 0x08) : data[4]);
-
-              if(data[11] != 0x00) {
-                int temp = data[11];
-                temp -= 128;
-                receivedSettings.temperature = (float)temp / 2;
-                tempMode =  true;
-              } else {
-                receivedSettings.temperature = lookupByteMapValue(TEMP_MAP, TEMP, 16, data[5]);
-              }
-
-              receivedSettings.fan         = lookupByteMapValue(FAN_MAP, FAN, 6, data[6]);
-              receivedSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
-              receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);   
-              
-              if(settingsChangedCallback && receivedSettings != currentSettings) {
-                currentSettings = receivedSettings;
-                settingsChangedCallback();
-              } else {
-                currentSettings = receivedSettings;
-              }
-
-              // if this is the first time we have synced with the heatpump, set wantedSettings to receivedSettings
-              if(firstRun || (autoUpdate && externalUpdate)) {
-                wantedSettings = currentSettings;
-                firstRun = false;
-              }
-
-              return RCVD_PKT_SETTINGS;
-            }
-
-            case 0x03: { //Room temperature reading
-              heatpumpStatus receivedStatus;
-
-              float receivedRoomTemp;
-              if(data[6] != 0x00) {
-                int temp = data[6];
-                temp -= 128;
-                receivedStatus.roomTemperature = (float)temp / 2;
-              } else {
-                receivedStatus.roomTemperature = lookupByteMapValue(ROOM_TEMP_MAP, ROOM_TEMP, 32, data[3]);
-              }
-
-              if((statusChangedCallback || roomTempChangedCallback) && currentStatus.roomTemperature != receivedStatus.roomTemperature) {
-                currentStatus.roomTemperature = receivedStatus.roomTemperature;
-
-                if(statusChangedCallback) {
-                  statusChangedCallback(currentStatus);
-                }
-
-                if(roomTempChangedCallback) { // this should be deprecated - statusChangedCallback covers it
-                  roomTempChangedCallback(currentStatus.roomTemperature);
-                }
-              } else {
-                currentStatus.roomTemperature = receivedStatus.roomTemperature;
-              }
-
-              return RCVD_PKT_ROOM_TEMP;
-            }
-
-            case 0x04: { // unknown
-                break; 
-            }
-
-            case 0x05: { // timer packet
-              heatpumpTimers receivedTimers;
-
-              receivedTimers.mode                = lookupByteMapValue(TIMER_MODE_MAP, TIMER_MODE, 4, data[3]);
-              receivedTimers.onMinutesSet        = data[4] * TIMER_INCREMENT_MINUTES;
-              receivedTimers.onMinutesRemaining  = data[6] * TIMER_INCREMENT_MINUTES;
-              receivedTimers.offMinutesSet       = data[5] * TIMER_INCREMENT_MINUTES;
-              receivedTimers.offMinutesRemaining = data[7] * TIMER_INCREMENT_MINUTES;
-
-              // callback for status change
-              if(statusChangedCallback && currentStatus.timers != receivedTimers) {
-                currentStatus.timers = receivedTimers;
-                statusChangedCallback(currentStatus);
-              } else {
-                currentStatus.timers = receivedTimers;
-              }
-
-              return RCVD_PKT_TIMER;
-            }
-
-            case 0x06: { // status
-              heatpumpStatus receivedStatus;
-              receivedStatus.operating = data[4];
-
-              // callback for status change
-              if(statusChangedCallback && currentStatus.operating != receivedStatus.operating) {
-                currentStatus.operating = receivedStatus.operating;
-                statusChangedCallback(currentStatus);
-              } else {
-                currentStatus.operating = receivedStatus.operating;
-              }
-
-              return RCVD_PKT_STATUS;
-            }
-
-            case 0x09: { // standby mode maybe?
-              break;
-            }
-          } 
-        } 
-        
-        if(header[1] == 0x61) { //Last update was successful 
-          return RCVD_PKT_UPDATE_SUCCESS;
-        } else if(header[1] == 0x7a) { //Last update was successful 
-          connected = true;
-          return RCVD_PKT_CONNECT_SUCCESS;
-        }
-      }
+  // read until we get start byte 0xfc
+  while (_HardSerial->available() > 0) {
+    header[0] = _HardSerial->read();
+    if(header[0] == HEADER[0]) {
+      foundStart = true;
     }
   }
 
-  return RCVD_PKT_FAIL;
-}
+  if(!foundStart) {
+    // One last shot, with timeouts.
+    header[0] = readByte();
+    if(header[0] != HEADER[0])
+      return RCVD_PKT_FAIL;
+  }
 
+  //read header
+  for(int i=1;i<5;i++) {
+    header[i] = readByte();
+  }
+
+  //check header
+  if(header[0] == HEADER[0] && header[2] == HEADER[2] && header[3] == HEADER[3]) {
+    dataLength = header[4];
+
+    for(int i=0;i<dataLength;i++) {
+      data[i] = readByte();
+    }
+
+    // read checksum byte
+    data[dataLength] = readByte();
+
+    // sum up the header bytes...
+    for (int i = 0; i < INFOHEADER_LEN; i++) {
+      dataSum += header[i];
+    }
+
+    // ...and add to that the sum of the data bytes
+    for (int i = 0; i < dataLength; i++) {
+      dataSum += data[i];
+    }
+
+    // calculate checksum
+    checksum = (0xfc - dataSum) & 0xff;
+
+    if(data[dataLength] == checksum) {
+      lastRecv = millis();
+      if(packetCallback) {
+	byte packet[37]; // we are going to put header[5] and data[32] into this, so the whole packet is sent to the callback
+	for(int i=0; i<INFOHEADER_LEN; i++) {
+	  packet[i] = header[i];
+	}
+	for(int i=0; i<(dataLength+1); i++) { //must be dataLength+1 to pick up checksum byte
+	  packet[(i+5)] = data[i];
+	}
+	packetCallback(packet, PACKET_LEN, (char*)"packetRecv");
+      }
+
+      if(header[1] == 0x62) {
+	switch(data[0]) {
+	  case 0x02:
+	    {
+	      // setting information
+	      heatpumpSettings receivedSettings;
+	      receivedSettings.power       = lookupByteMapValue(POWER_MAP, POWER, 2, data[3]);
+	      receivedSettings.iSee = data[4] > 0x08 ? true : false;
+	      receivedSettings.mode = lookupByteMapValue(MODE_MAP, MODE, 5, receivedSettings.iSee  ? (data[4] - 0x08) : data[4]);
+
+	      if(data[11] != 0x00) {
+		int temp = data[11];
+		temp -= 128;
+		receivedSettings.temperature = (float)temp / 2;
+		tempMode =  true;
+	      } else {
+		receivedSettings.temperature = lookupByteMapValue(TEMP_MAP, TEMP, 16, data[5]);
+	      }
+
+	      receivedSettings.fan         = lookupByteMapValue(FAN_MAP, FAN, 6, data[6]);
+	      receivedSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
+	      receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);   
+
+	      if(settingsChangedCallback && receivedSettings != currentSettings) {
+		currentSettings = receivedSettings;
+		settingsChangedCallback();
+	      } else {
+		currentSettings = receivedSettings;
+	      }
+
+	      // if this is the first time we have synced with the heatpump, set wantedSettings to receivedSettings
+	      if(firstRun || (autoUpdate && externalUpdate)) {
+		wantedSettings = currentSettings;
+		firstRun = false;
+	      }
+
+	      return RCVD_PKT_SETTINGS;
+	    }
+
+	  case 0x03:
+	    {
+	      //Room temperature reading
+	      heatpumpStatus receivedStatus;
+
+	      if(data[6] != 0x00) {
+		int temp = data[6];
+		temp -= 128;
+		receivedStatus.roomTemperature = (float)temp / 2;
+	      } else {
+		receivedStatus.roomTemperature = lookupByteMapValue(ROOM_TEMP_MAP, ROOM_TEMP, 32, data[3]);
+	      }
+
+	      if((statusChangedCallback || roomTempChangedCallback) && currentStatus.roomTemperature != receivedStatus.roomTemperature) {
+		currentStatus.roomTemperature = receivedStatus.roomTemperature;
+
+		if(statusChangedCallback) {
+		  statusChangedCallback(currentStatus);
+		}
+
+		if(roomTempChangedCallback) { // this should be deprecated - statusChangedCallback covers it
+		  roomTempChangedCallback(currentStatus.roomTemperature);
+		}
+	      } else {
+		currentStatus.roomTemperature = receivedStatus.roomTemperature;
+	      }
+
+	      return RCVD_PKT_ROOM_TEMP;
+	    }
+
+	  case 0x04:
+	    {
+	      // unknown
+	      break; 
+	    }
+
+	  case 0x05:
+	    {
+	      // timer packet
+	      heatpumpTimers receivedTimers;
+
+	      receivedTimers.mode                = lookupByteMapValue(TIMER_MODE_MAP, TIMER_MODE, 4, data[3]);
+	      receivedTimers.onMinutesSet        = data[4] * TIMER_INCREMENT_MINUTES;
+	      receivedTimers.onMinutesRemaining  = data[6] * TIMER_INCREMENT_MINUTES;
+	      receivedTimers.offMinutesSet       = data[5] * TIMER_INCREMENT_MINUTES;
+	      receivedTimers.offMinutesRemaining = data[7] * TIMER_INCREMENT_MINUTES;
+
+	      // callback for status change
+	      if(statusChangedCallback && currentStatus.timers != receivedTimers) {
+		currentStatus.timers = receivedTimers;
+		statusChangedCallback(currentStatus);
+	      } else {
+		currentStatus.timers = receivedTimers;
+	      }
+
+	      return RCVD_PKT_TIMER;
+	    }
+
+	  case 0x06:
+	    {
+	      // status
+	      heatpumpStatus receivedStatus;
+	      receivedStatus.operating = data[4];
+
+	      // callback for status change
+	      if(statusChangedCallback && currentStatus.operating != receivedStatus.operating) {
+		currentStatus.operating = receivedStatus.operating;
+		statusChangedCallback(currentStatus);
+	      } else {
+		currentStatus.operating = receivedStatus.operating;
+	      }
+
+	      return RCVD_PKT_STATUS;
+	    }
+
+	  case 0x09:
+	    {
+	      // standby mode maybe?
+	      break;
+	    }
+	} 
+      } 
+
+      if(header[1] == 0x61) { //Last update was successful 
+	return RCVD_PKT_UPDATE_SUCCESS;
+      } else if(header[1] == 0x7a) { //Last update was successful 
+	connected = true;
+	return RCVD_PKT_CONNECT_SUCCESS;
+      }
+    }
+  } else {
+    return RCVD_PKT_FAIL;
+  }
+}
