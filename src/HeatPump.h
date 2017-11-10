@@ -179,7 +179,7 @@ class HeatPump
     // indexes for INFOMODE array (public so they can be optionally passed to sync())
     const int RQST_PKT_SETTINGS  = 0;
     const int RQST_PKT_ROOM_TEMP = 1;
-    const int RQST_PKT_TIMERS    = 2;
+    const int RQST_PKT_TIMERS    = 3;
     const int RQST_PKT_STATUS    = 4;
     const int RQST_PKT_STANDBY   = 5;
 
