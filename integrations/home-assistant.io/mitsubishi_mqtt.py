@@ -4,6 +4,7 @@ Support for Mitsubishi heatpumps using https://github.com/SwiCago/HeatPump over 
 For more details about this platform, please refer to the documentation at
 https://github.com/lekobob/mitsu_mqtt
 """
+
 import logging
 
 import voluptuous as vol
@@ -12,7 +13,8 @@ from homeassistant.components.mqtt import (
     CONF_STATE_TOPIC, CONF_COMMAND_TOPIC, CONF_QOS, CONF_RETAIN)
 
 from homeassistant.components.climate import (
-    ClimateDevice, )
+    ClimateDevice, SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE, 
+    SUPPORT_FAN_MODE, SUPPORT_SWING_MODE)
 
 from homeassistant.const import (
     CONF_NAME, CONF_VALUE_TEMPLATE, TEMP_CELSIUS, ATTR_TEMPERATURE)
@@ -28,6 +30,8 @@ _LOGGER = logging.getLogger(__name__)
 DEPENDENCIES = ['mqtt']
 
 DEFAULT_NAME = 'MQTT Climate'
+
+SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE | SUPPORT_FAN_MODE | SUPPORT_SWING_MODE
 
 PLATFORM_SCHEMA = mqtt.MQTT_RW_PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
@@ -91,17 +95,22 @@ class MqttClimate(ClimateDevice):
                     self._current_operation = parsed['mode'] 
                     self._current_power = "ON"
             elif topic == self._temperature_state_topic:
+                _LOGGER.debug('Room Temp: {0}'.format(parsed['roomTemperature']))
                 self._current_temperature = float(parsed['roomTemperature'])
             else:
                 print("unknown topic")
-            self.update_ha_state()
+            self.schedule_update_ha_state()
             _LOGGER.debug("Power=%s, Operation=%s", self._current_power, self._current_operation)
         
         for topic in [self._state_topic, self._temperature_state_topic]:
             mqtt.subscribe(
                 hass, topic, message_received, self._qos)
 
-
+    @property
+    def supported_features(self):
+        """Return the list of supported features."""
+        return SUPPORT_FLAGS
+        
     @property
     def should_poll(self):
         """Polling not needed for a demo climate device."""
