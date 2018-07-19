@@ -1,0 +1,22 @@
+//assumes an mqtt broker named "broker" defined in services/mqtt.cfg.  See https://www.openhab.org/addons/bindings/mqtt1
+
+//Larger HP with widevane
+Switch Living_HP_Power							"Power"										{ mqtt=">[broker:home/livingroom/heatpump/set:command:*:MAP(HPPower.map)],<[broker:home/livingroom/heatpump:state:JSONPATH($.power)]" }
+String Living_HP_Mode							"Mode"					<text>				{ mqtt=">[broker:home/livingroom/heatpump/set:command:*:MAP(HPMode.map)],<[broker:home/livingroom/heatpump:state:JSONPATH($.mode)]" }
+Number Living_HP_Temp							"Set Temp: [%d]"		<temperature>		{ mqtt=">[broker:home/livingroom/heatpump/set:command:*:MAP(HPTemp.map)],<[broker:home/livingroom/heatpump:state:JSONPATH($.temperature)]" }
+String Living_HP_Fan							"Fan: [%s]"				<fan>				{ mqtt=">[broker:home/livingroom/heatpump/set:command:*:MAP(HPFan.map)],<[broker:home/livingroom/heatpump:state:JSONPATH($.fan)]" }
+String Living_HP_Vane							"Vane: [%s]"			<flow>				{ mqtt=">[broker:home/livingroom/heatpump/set:command:*:MAP(HPVane.map)],<[broker:home/livingroom/heatpump:state:JSONPATH($.vane)]" }
+String Living_HP_WideVane						"WideVane: [%s]"		<flow>				{ mqtt=">[broker:home/livingroom/heatpump/set:command:*:MAP(HPWideVane.map)],<[broker:home/livingroom/heatpump:state:JSONPATH($.wideVane)]" }
+Number Living_HP_RemoteTemp												<temperature>		{ mqtt=">[broker:home/livingroom/heatpump/set:command:*:MAP(HPRemoteTemp.map)]" }
+String Living_HP_Status							"Operating: [%s]"		<text>				{ mqtt="<[broker:home/livingroom/heatpump/status:state:JSONPATH($.operating)]" }
+Number Living_HP_RoomTemp						"RoomTemp: [%d]"		<temperature>		{ mqtt="<[broker:home/livingroom/heatpump/status:state:JSONPATH($.roomTemperature)]" }
+
+//Smaller HP without widevane
+Switch Theater_HP_Power							"Power"										{ mqtt=">[broker:home/theater/heatpump/set:command:*:MAP(HPPower.map)],<[broker:home/theater/heatpump:state:JSONPATH($.power)]" }
+String Theater_HP_Mode							"Mode"					<text>				{ mqtt=">[broker:home/theater/heatpump/set:command:*:MAP(HPMode.map)],<[broker:home/theater/heatpump:state:JSONPATH($.mode)]" }
+Number Theater_HP_Temp							"Set Temp: [%d]"		<temperature>		{ mqtt=">[broker:home/theater/heatpump/set:command:*:MAP(HPTemp.map)],<[broker:home/theater/heatpump:state:JSONPATH($.temperature)]" }
+String Theater_HP_Fan							"Fan: [%s]"				<fan>				{ mqtt=">[broker:home/theater/heatpump/set:command:*:MAP(HPFan.map)],<[broker:home/theater/heatpump:state:JSONPATH($.fan)]" }
+String Theater_HP_Vane							"Vane: [%s]"			<flow>				{ mqtt=">[broker:home/theater/heatpump/set:command:*:MAP(HPVane.map)],<[broker:home/theater/heatpump:state:JSONPATH($.vane)]" }
+Number Theater_HP_RemoteTemp											<temperature>		{ mqtt=">[broker:home/theater/heatpump/set:command:*:MAP(HPRemoteTemp.map)]" }
+String Theater_HP_Status						"Operating: [%s]"		<text>				{ mqtt="<[broker:home/theater/heatpump/status:state:JSONPATH($.operating)]" }
+Number Theater_HP_RoomTemp						"RoomTemp: [%d]"		<temperature>		{ mqtt="<[broker:home/theater/heatpump/status:state:JSONPATH($.roomTemperature)]" }
