@@ -93,8 +93,9 @@ class HeatPump
     static const int HEADER_LEN  = 8;
     const byte HEADER[HEADER_LEN]  = {0xfc, 0x41, 0x01, 0x30, 0x10, 0x01, 0x00, 0x00};
 
-    const byte INFOHEADER[5]  = {0xfc, 0x42, 0x01, 0x30, 0x10};
     static const int INFOHEADER_LEN  = 5;
+    const byte INFOHEADER[INFOHEADER_LEN]  = {0xfc, 0x42, 0x01, 0x30, 0x10};
+    
  
     static const int INFOMODE_LEN = 6;
     const byte INFOMODE[INFOMODE_LEN] = {
