@@ -31,3 +31,4 @@ const int blueLedPin = 2; // Onboard LED = digital pin 0 (blue LED on adafruit E
 
 // sketch settings
 const unsigned int SEND_ROOM_TEMP_INTERVAL_MS = 60000;
+const bool isCelsius = true;   // true = Celsius, false = Fahreneit

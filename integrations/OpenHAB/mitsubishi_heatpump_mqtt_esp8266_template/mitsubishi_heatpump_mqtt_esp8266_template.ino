@@ -65,7 +65,7 @@ void hpSettingsChanged() {
 
   root["power"]       = currentSettings.power;
   root["mode"]        = currentSettings.mode;
-  root["temperature"] = hp.CelsiusToFahrenheit(currentSettings.temperature); //convert HP's C to F
+  root["temperature"] = (isCelsius) ? currentSettings.temperature: hp.CelsiusToFahrenheit(currentSettings.temperature);
   root["fan"]         = currentSettings.fan;
   root["vane"]        = currentSettings.vane;
   root["wideVane"]    = currentSettings.wideVane;
@@ -84,7 +84,7 @@ void hpStatusChanged(heatpumpStatus currentStatus) {
   DynamicJsonBuffer jsonBufferInfo(bufferSizeInfo);
   
   JsonObject& rootInfo = jsonBufferInfo.createObject();
-  rootInfo["roomTemperature"] = hp.CelsiusToFahrenheit(hp.getRoomTemperature()); //convert HP's c to F
+  rootInfo["roomTemperature"] = (isCelsius) ? hp.getRoomTemperature() : hp.CelsiusToFahrenheit(hp.getRoomTemperature());
   rootInfo["operating"]       = currentStatus.operating;
   
   char bufferInfo[512];
@@ -170,9 +170,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     }
 
     if (root.containsKey("temperature")) {
-      float temperature = root["temperature"];
-      //hp.setTemperature(temperature);
-      hp.setTemperature( hp.FahrenheitToCelsius(temperature) ); //set F to HP's C
+      float temperature = (isCelsius) ? root["temperature"]: hp.FahrenheitToCelsius(root["temperature"]);
+      hp.setTemperature( temperature ); 
     }
 
     if (root.containsKey("fan")) {
@@ -191,9 +190,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     }
 
     if(root.containsKey("remoteTemp")) {
-      float remoteTemp = root["remoteTemp"];
-      //hp.setRemoteTemperature(remoteTemp);
-      hp.setRemoteTemperature( hp.FahrenheitToCelsius(remoteTemp) ); //set F to HP's C
+      float remoteTemp = (isCelsius) ? root["remoteTemp"]: hp.FahrenheitToCelsius(root["remoteTemp"]);
+      hp.setRemoteTemperature( remoteTemp ); 
       lastRemoteTemp = millis();
     }
     else if (root.containsKey("custom")) {
