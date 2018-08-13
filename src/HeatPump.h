@@ -165,6 +165,8 @@ class HeatPump
     byte checkSum(byte bytes[], int len);
     void createPacket(byte *packet, heatpumpSettings settings);
     void createInfoPacket(byte *packet, byte packetType);
+    // Spend up to 1 second trying to read a single byte from the serial port.
+    byte readByte();
     int readPacket();
     void writePacket(byte *packet, int length);
 
