@@ -1,0 +1,5 @@
+COOL={"mode":"COOL"}
+HEAT={"mode":"HEAT"}
+DRY={"mode":"DRY"}
+AUTO={"mode":"AUTO"}
+FAN={"mode":"FAN"}

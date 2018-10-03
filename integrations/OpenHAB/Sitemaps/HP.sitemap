@@ -1,0 +1,28 @@
+sitemap HP label="HP's"
+{ //start sitemap
+	
+	Frame { //Quick Items frame
+		Text label="HeatPumps" icon="temperature" {
+			Frame label="LivingRoom" icon="temperature" { //Large HP with widevane
+				Switch item=Living_HP_Power
+				Switch item=Living_HP_Mode mappings=[COOL="Cool", HEAT="Heat", DRY="Dry"]
+				Setpoint item=Living_HP_Temp minValue=61 maxValue=88 step=1
+				Selection item=Living_HP_Fan mappings=[1="1", 2="2",3="3",4="4",AUTO="AUTO",QUIET="QUIET"]
+				Selection item=Living_HP_Vane mappings=[1="1", 2="2",3="3",4="4",5="5",AUTO="AUTO",SWING="SWING"]
+				Selection item=Living_HP_WideVane mappings=["<<"="<<","<"="<","|"="|",">"=">",">>"=">>",SWING="SWING"]
+				Text item=Living_HP_Status
+				Text item=Living_HP_RoomTemp
+			}
+			Frame label="Theater" icon="temperature" { //Smaller HP without widevane
+				Switch item=Theater_HP_Power
+				Switch item=Theater_HP_Mode mappings=[COOL="Cool", HEAT="Heat", DRY="Dry"]
+				Setpoint item=Theater_HP_Temp minValue=61 maxValue=88 step=1
+				Selection item=Theater_HP_Fan mappings=[1="1", 2="2",3="3",4="4",AUTO="AUTO",QUIET="QUIET"]
+				Selection item=Theater_HP_Vane mappings=[1="1", 2="2",3="3",4="4",5="5",AUTO="AUTO",SWING="SWING"]
+				Text item=Theater_HP_Status
+				Text item=Theater_HP_RoomTemp
+			}
+		}
+	} //end quick items frame
+
+} // end sitemap

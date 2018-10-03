@@ -124,8 +124,8 @@ bool HeatPump::update() {
   }
 }
 
-int HeatPump::sync(byte packetType) {
-  if((!connected) || (millis() - (PACKET_SENT_INTERVAL_MS * 10) > lastRecv)) {
+void HeatPump::sync(byte packetType) {
+  if((!connected) || (millis() - lastRecv > (PACKET_SENT_INTERVAL_MS * 10))) {
     connect(NULL);
   }
   else if(autoUpdate && !firstRun && wantedSettings != currentSettings && packetType == PACKET_TYPE_DEFAULT) {
@@ -137,7 +137,7 @@ int HeatPump::sync(byte packetType) {
     writePacket(packet, PACKET_LEN);
   }
   
-  return readPacket();
+  readPacket();
 }
 
 void HeatPump::enableExternalUpdate() {
