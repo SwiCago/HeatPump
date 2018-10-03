@@ -136,8 +136,8 @@ void HeatPump::sync(byte packetType) {
     createInfoPacket(packet, packetType);
     writePacket(packet, PACKET_LEN);
   }
-
-  readPacket(); 
+  
+  readPacket();
 }
 
 void HeatPump::enableExternalUpdate() {
@@ -611,13 +611,16 @@ int HeatPump::readPacket() {
             case 0x06: { // status
               heatpumpStatus receivedStatus;
               receivedStatus.operating = data[4];
+              receivedStatus.compressorFrequency = data[3];
 
-              // callback for status change
+              // callback for status change -- not triggered for compressor frequency at the moment
               if(statusChangedCallback && currentStatus.operating != receivedStatus.operating) {
                 currentStatus.operating = receivedStatus.operating;
+                currentStatus.compressorFrequency = receivedStatus.compressorFrequency;
                 statusChangedCallback(currentStatus);
               } else {
                 currentStatus.operating = receivedStatus.operating;
+                currentStatus.compressorFrequency = receivedStatus.compressorFrequency;
               }
 
               return RCVD_PKT_STATUS;

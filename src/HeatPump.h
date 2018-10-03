@@ -78,6 +78,7 @@ struct heatpumpStatus {
   float roomTemperature;
   bool operating; // if true, the heatpump is operating to reach the desired temperature
   heatpumpTimers timers;
+  int compressorFrequency;
 };
 
 class HeatPump
@@ -179,15 +180,15 @@ class HeatPump
     // indexes for INFOMODE array (public so they can be optionally passed to sync())
     const int RQST_PKT_SETTINGS  = 0;
     const int RQST_PKT_ROOM_TEMP = 1;
-    const int RQST_PKT_TIMERS    = 2;
-    const int RQST_PKT_STATUS    = 3;
-    const int RQST_PKT_STANDBY   = 4;
+    const int RQST_PKT_TIMERS    = 3;
+    const int RQST_PKT_STATUS    = 4;
+    const int RQST_PKT_STANDBY   = 5;
 
     // general
     HeatPump();
     bool connect(HardwareSerial *serial);
     bool update();
-    void sync(byte packetType = PACKET_TYPE_DEFAULT);
+    int sync(byte packetType = PACKET_TYPE_DEFAULT);
     void enableExternalUpdate();
     void enableAutoUpdate();
     void disableAutoUpdate();
