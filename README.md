@@ -1,13 +1,12 @@
 [![Join the chat at https://gitter.im/Mitsubishi-Heat-Pump](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mitsubishi-Heat-Pump?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-HeatPump
-----------
-Arduino library to control Mitsubishi Heat Pumps via connector cn105
+# HeatPump
 
-Quick start
------------
+Arduino library to control Mitsubishi Heat Pumps via connector CN105.
 
-#### Controlling the heat pump
+## Quick start
+
+### Controlling the heat pump
 
 ```c++
 HeatPump hp;
@@ -31,7 +30,7 @@ hp.update();
 
 [See heatPump_test.ino](examples/heatPump_test/heatPump_test.ino)
 
-#### Getting updates from the heat pump
+### Getting updates from the heat pump
 
 ```c++
 void setup() {
@@ -48,49 +47,61 @@ void loop() {
 
 ```
 
-Contents
---------
+## Contents
+
 - sources
 - sample usage code
 - Demo circuit using ESP-01
 
-Installation
-------------
+## Installation
+
 - PULL or download zip.
 - Move contents into Arduino library directory
 - Restart IDE, samples should be avaliable
 
-Notes
------
+## Notes
+
 - Tested with ESP8266
 - Tested with Arduino Micro Pro / Arduino Nano
 - Tested with Mitsubishi HeatPump MSZ-FH/GE(wall units) and SEZ-KD (ducted units) [complete list](https://github.com/SwiCago/HeatPump/wiki/Supported-models)
 
-Demo Circuit
-------------
+## Demo Circuit
+
 <img src="https://github.com/SwiCago/HeatPump/blob/master/CN105_ESP8266.png"/>
 
-# Parts required to make a CN105 female connector
+## Parts
+
+### Parts required to make a CN105 female connector
+
 - PAP-05V-S CONN HOUSING PA 5POS 2MM WHITE 
-  - Digi-Key Part Number 	455-1489-ND 
-  - https://www.digikey.com/product-detail/en/jst-sales-america-inc/PAP-05V-S/455-1489-ND/759977
+    - Digi-Key Part Number 	455-1489-ND 
+    - <https://www.digikey.com/product-detail/en/jst-sales-america-inc/PAP-05V-S/455-1489-ND/759977>
 - SPHD-002T-P0.5  CONN TERM PHD CRIMP 24-28AWG TIN  
-  - Digi-Key Part Number 	455-1313-1-ND
-  - https://www.digikey.com/product-detail/en/jst-sales-america-inc/SPHD-002T-P0.5/455-1313-1-ND/608809
+    - Digi-Key Part Number 	455-1313-1-ND
+    - <https://www.digikey.com/product-detail/en/jst-sales-america-inc/SPHD-002T-P0.5/455-1313-1-ND/608809>
 - JUMPER SPHD-001T-P0.5 X2 12" (pre-crimped alternative to 455-1313-1-ND connectors)
-  - Digi-Key Part Number    455-3086-ND
-  - https://www.digikey.co.uk/product-detail/en/jst-sales-america-inc/APAPA22K305/455-3086-ND/6009462
+    - Digi-Key Part Number    455-3086-ND
+    - <https://www.digikey.co.uk/product-detail/en/jst-sales-america-inc/APAPA22K305/455-3086-ND/6009462>
+
+### Other part suggestions
+
 - Premade pigtails
-  - http://www.usastore.revolectrix.com/Products_2/Cellpro-4s-Charge-Adapters_2/Cellpro-JST-PA-Battery-Pigtail-10-5-Position
+    - <http://www.usastore.revolectrix.com/Products_2/Cellpro-4s-Charge-Adapters_2/Cellpro-JST-PA-Battery-Pigtail-10-5-Position>
 - ESP-01 module (4pk)
-  - https://www.amazon.com/gp/product/B01EA3UJJ4/
+    - <https://www.amazon.com/gp/product/B01EA3UJJ4/>
 - Cheap 5V to 3.3V regulator (10pk), for those that don't want to make one
-  - https://www.amazon.com/gp/product/B00XAGSHY2/
+    - <https://www.amazon.com/gp/product/B00XAGSHY2/>
+- ESP-01 breakout with prewired level shifters and regulator
+    - <https://www.amazon.com/gp/product/B01M09B43H/>
 
-========================================  
-Special thanks to Hadley in New Zealand 
-  - His blog post, describing baud rate and details of cn105, Raspberry Pi Python code
-  - https://nicegear.co.nz/blog/hacking-a-mitsubishi-heat-pump-air-conditioner/
 
-# GNU Lesser General Public License
+## Special thanks
+
+... to Hadley in New Zealand. His blog post, describing baud rate and details of cn105, Raspberry Pi Python code:
+
+<https://nicegear.co.nz/blog/hacking-a-mitsubishi-heat-pump-air-conditioner/>
+
+## Licence
+
+Licensed under the GNU Lesser General Public License.
 https://www.gnu.org/licenses/lgpl.html
