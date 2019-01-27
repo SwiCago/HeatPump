@@ -54,96 +54,96 @@ void handle_root() {
   String toSend = html;
   toSend.replace("_RATE_", "60");
   toSend.replace("_ROOMTEMP_", String(hp.getRoomTemperature()));
-  toSend.replace("_POWER_",settings.power == "ON" ? "checked" : "");
-  if(settings.mode == "HEAT") {
+  toSend.replace("_POWER_", strcmp(settings.power, "ON") == 0 ? "checked" : "");
+  if(strcmp(settings.mode, "HEAT") == 0) {
     toSend.replace("_MODE_H_","checked");
   }
-  else if(settings.mode == "DRY") {
+  else if(strcmp(settings.mode, "DRY") == 0) {
     toSend.replace("_MODE_D_","checked");
   }
-  else if(settings.mode == "COOL") {
+  else if(strcmp(settings.mode, "COOL") == 0) {
     toSend.replace("_MODE_C_","checked");
   }
-  else if(settings.mode == "FAN") {
+  else if(strcmp(settings.mode, "FAN") == 0) {
     toSend.replace("_MODE_F_","checked");
   }
-  else if(settings.mode == "AUTO") {
+  else if(strcmp(settings.mode, "AUTO") == 0) {
     toSend.replace("_MODE_A_","checked");
   }
-  if(settings.fan == "AUTO") {
+  if(strcmp(settings.fan, "AUTO") == 0) {
     toSend.replace("_FAN_A_","checked");
   }
-  else if(settings.fan == "QUIET") {
+  else if(strcmp(settings.fan, "QUIET") == 0) {
     toSend.replace("_FAN_Q_","checked");
   }
-  else if(settings.fan == "1") {
+  else if(strcmp(settings.fan, "1") == 0) {
     toSend.replace("_FAN_1_","checked");
   }
-  else if(settings.fan == "2") {
+  else if(strcmp(settings.fan, "2") == 0) {
     toSend.replace("_FAN_2_","checked");
   }
-  else if(settings.fan == "3") {
+  else if(strcmp(settings.fan, "3") == 0) {
     toSend.replace("_FAN_3_","checked");
   }
-  else if(settings.fan == "4") {
+  else if(strcmp(settings.fan, "4") == 0) {
     toSend.replace("_FAN_4_","checked");
   }
  
   toSend.replace("_VANE_V_",settings.vane);
-  if(settings.vane == "AUTO") {
+  if(strcmp(settings.vane, "AUTO") == 0) {
     toSend.replace("_VANE_C_","rotate0");
     toSend.replace("_VANE_T_","AUTO");
   }
-  else if(settings.vane == "1") {
+  else if(strcmp(settings.vane, "1") == 0) {
     toSend.replace("_VANE_C_","rotate0");
     toSend.replace("_VANE_T_","&#10143;");
   }
-  else if(settings.vane == "2") {
+  else if(strcmp(settings.vane, "2") == 0) {
     toSend.replace("_VANE_C_","rotate22");
     toSend.replace("_VANE_T_","&#10143;");
   }
-  else if(settings.vane == "3") {
+  else if(strcmp(settings.vane, "3") == 0) {
     toSend.replace("_VANE_C_","rotate45");
     toSend.replace("_VANE_T_","&#10143;");
   }
-  else if(settings.vane == "4") {
+  else if(strcmp(settings.vane, "4") == 0) {
     toSend.replace("_VANE_C_","rotate67");
     toSend.replace("_VANE_T_","&#10143;");
   }
-  else if(settings.vane == "5") {
+  else if(strcmp(settings.vane, "5") == 0) {
     toSend.replace("_VANE_C_","rotate90");
     toSend.replace("_VANE_T_","&#10143;");
   }
-  else if(settings.vane == "SWING") {
+  else if(strcmp(settings.vane, "SWING") == 0) {
     toSend.replace("_VANE_C_","rotateV");
     toSend.replace("_VANE_T_","&#10143;");
   }
   toSend.replace("_WIDEVANE_V_",settings.wideVane);
-  if(settings.wideVane == "<<") {
+  if(strcmp(settings.wideVane, "<<") == 0) {
     toSend.replace("_WIDEVANE_C_","rotate157");
     toSend.replace("_WIDEVANE_T_","&#10143;");
   }
-  else if(settings.wideVane == "<") {
+  else if(strcmp(settings.wideVane, "<") == 0) {
     toSend.replace("_WIDEVANE_C_","rotate124");
     toSend.replace("_WIDEVANE_T_","&#10143;");
   }
-  else if(settings.wideVane == "|") {
+  else if(strcmp(settings.wideVane, "|") == 0) {
     toSend.replace("_WIDEVANE_C_","rotate90");
     toSend.replace("_WIDEVANE_T_","&#10143;");
   }
-  else if(settings.wideVane == ">") {
+  else if(strcmp(settings.wideVane, ">") == 0) {
     toSend.replace("_WIDEVANE_C_","rotate57");
     toSend.replace("_WIDEVANE_T_","&#10143;");
   }
-  else if(settings.wideVane == ">>") {
+  else if(strcmp(settings.wideVane, ">>") == 0) {
     toSend.replace("_WIDEVANE_C_","rotate22");
     toSend.replace("_WIDEVANE_T_","&#10143;");
   }
-  else if(settings.wideVane == "<>") {
+  else if(strcmp(settings.wideVane, "<>") == 0) {
     toSend.replace("_WIDEVANE_C_","");
     toSend.replace("_WIDEVANE_T_","<div class='rotate124'>&#10143;</div>&nbsp;<div class='rotate57'>&#10143;</div>");
   }
-  else if(settings.wideVane == "SWING") {
+  else if(strcmp(settings.wideVane, "SWING") == 0) {
     toSend.replace("_WIDEVANE_C_","rotateH");
     toSend.replace("_WIDEVANE_T_","&#10143;");
   }
@@ -163,7 +163,7 @@ heatpumpSettings change_states(heatpumpSettings settings) {
       update = true;
     }
     if (server.hasArg("MODE")) {
-      settings.mode=server.arg("MODE");
+      settings.mode=server.arg("MODE").c_str();
       update = true;
     }
     if (server.hasArg("TEMP")) {
@@ -171,15 +171,15 @@ heatpumpSettings change_states(heatpumpSettings settings) {
       update = true;
     }
     if (server.hasArg("FAN")) {
-      settings.fan=server.arg("FAN");
+      settings.fan=server.arg("FAN").c_str();
       update = true;
     }
     if (server.hasArg("VANE")) {
-      settings.vane=server.arg("VANE");
+      settings.vane=server.arg("VANE").c_str();
       update = true;
     }
     if (server.hasArg("WIDEVANE")) {
-      settings.wideVane=server.arg("WIDEVANE");
+      settings.wideVane=server.arg("WIDEVANE").c_str();
       update = true;
     }
     if(update) {

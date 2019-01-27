@@ -110,11 +110,11 @@ bool change_states() {
   }
   else {
     if (server.hasArg("POWER")) {
-      hp.setPowerSetting(server.arg("POWER"));
+      hp.setPowerSetting(server.arg("POWER").c_str());
       updated = true;
     }
     if (server.hasArg("MODE")) {
-      hp.setModeSetting(server.arg("MODE"));
+      hp.setModeSetting(server.arg("MODE").c_str());
       updated = true;
     }
     if (server.hasArg("TEMP")) {
@@ -122,15 +122,15 @@ bool change_states() {
       updated = true;
     }
     if (server.hasArg("FAN")) {
-      hp.setFanSpeed(server.arg("FAN"));
+      hp.setFanSpeed(server.arg("FAN").c_str());
       updated = true;
     }
     if (server.hasArg("VANE")) {
-      hp.setVaneSetting(server.arg("VANE"));
+      hp.setVaneSetting(server.arg("VANE").c_str());
       updated = true;
     }
     if (server.hasArg("DIR")) {
-      hp.setWideVaneSetting(server.arg("WIDEVANE"));
+      hp.setWideVaneSetting(server.arg("WIDEVANE").c_str());
       updated = true;
     }
     hp.update(); 
