@@ -164,12 +164,12 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
     // Step 3: Retrieve the values
     if (root.containsKey("power")) {
-      String power = root["power"];
+      const char* power = root["power"];
       hp.setPowerSetting(power);
     }
 
     if (root.containsKey("mode")) {
-      String mode = root["mode"];
+      const char* mode = root["mode"];
       hp.setModeSetting(mode);
     }
 
@@ -179,17 +179,17 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     }
 
     if (root.containsKey("fan")) {
-      String fan = root["fan"];
+      const char* fan = root["fan"];
       hp.setFanSpeed(fan);
     }
 
     if (root.containsKey("vane")) {
-      String vane = root["vane"];
+      const char* vane = root["vane"];
       hp.setVaneSetting(vane);
     }
 
     if (root.containsKey("wideVane")) {
-      String wideVane = root["wideVane"];
+      const char* wideVane = root["wideVane"];
       hp.setWideVaneSetting(wideVane);
     }
 

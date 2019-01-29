@@ -173,20 +173,30 @@ void HeatPump::setPowerSetting(bool setting) {
   wantedSettings.power = lookupByteMapIndex(POWER_MAP, 2, POWER_MAP[setting ? 1 : 0]) > -1 ? POWER_MAP[setting ? 1 : 0] : POWER_MAP[0];
 }
 
-String HeatPump::getPowerSetting() {
+const char* HeatPump::getPowerSetting() {
   return currentSettings.power;
 }
 
-void HeatPump::setPowerSetting(String setting) {
-  wantedSettings.power = lookupByteMapIndex(POWER_MAP, 2, setting) > -1 ? setting : POWER_MAP[0];
+void HeatPump::setPowerSetting(const char* setting) {
+  int index = lookupByteMapIndex(POWER_MAP, 2, setting);
+  if (index > -1) {
+    wantedSettings.power = POWER_MAP[index];
+  } else {
+    wantedSettings.power = POWER_MAP[0];
+  }
 }
 
-String HeatPump::getModeSetting() {
+const char* HeatPump::getModeSetting() {
   return currentSettings.mode;
 }
 
-void HeatPump::setModeSetting(String setting) {
-  wantedSettings.mode = lookupByteMapIndex(MODE_MAP, 5, setting) > -1 ? setting : MODE_MAP[0];
+void HeatPump::setModeSetting(const char* setting) {
+  int index = lookupByteMapIndex(MODE_MAP, 5, setting);
+  if (index > -1) {
+    wantedSettings.mode = MODE_MAP[index];
+  } else {
+    wantedSettings.mode = MODE_MAP[0];
+  }
 }
 
 float HeatPump::getTemperature() {
@@ -233,28 +243,44 @@ void HeatPump::setRemoteTemperature(float setting) {
   writePacket(packet, PACKET_LEN);
 }
 
-String HeatPump::getFanSpeed() {
+const char* HeatPump::getFanSpeed() {
   return currentSettings.fan;
 }
 
-void HeatPump::setFanSpeed(String setting) {
-  wantedSettings.fan = lookupByteMapIndex(FAN_MAP, 6, setting) > -1 ? setting : FAN_MAP[0];
+
+void HeatPump::setFanSpeed(const char* setting) {
+  int index = lookupByteMapIndex(FAN_MAP, 6, setting);
+  if (index > -1) {
+    wantedSettings.fan = FAN_MAP[index];
+  } else {
+    wantedSettings.fan = FAN_MAP[0];
+  }
 }
 
-String HeatPump::getVaneSetting() {
+const char* HeatPump::getVaneSetting() {
   return currentSettings.vane;
 }
 
-void HeatPump::setVaneSetting(String setting) {
-  wantedSettings.vane = lookupByteMapIndex(VANE_MAP, 7, setting) > -1 ? setting : VANE_MAP[0];
+void HeatPump::setVaneSetting(const char* setting) {
+  int index = lookupByteMapIndex(VANE_MAP, 7, setting);
+  if (index > -1) {
+    wantedSettings.vane = VANE_MAP[index];
+  } else {
+    wantedSettings.vane = VANE_MAP[0];
+  }
 }
 
-String HeatPump::getWideVaneSetting() {
+const char* HeatPump::getWideVaneSetting() {
   return currentSettings.wideVane;
 }
 
-void HeatPump::setWideVaneSetting(String setting) {
-  wantedSettings.wideVane = lookupByteMapIndex(WIDEVANE_MAP, 7, setting) > -1 ? setting : WIDEVANE_MAP[0];
+void HeatPump::setWideVaneSetting(const char* setting) {
+  int index = lookupByteMapIndex(WIDEVANE_MAP, 7, setting);
+  if (index > -1) {
+    wantedSettings.wideVane = VANE_MAP[index];
+  } else {
+    wantedSettings.wideVane = VANE_MAP[0];
+  }
 }
 
 bool HeatPump::getIseeBool() { //no setter yet
@@ -335,9 +361,9 @@ int HeatPump::lookupByteMapIndex(const int valuesMap[], int len, int lookupValue
   return -1;
 }
 
-int HeatPump::lookupByteMapIndex(const String valuesMap[], int len, String lookupValue) {
+int HeatPump::lookupByteMapIndex(const char* valuesMap[], int len, const char* lookupValue) {
   for (int i = 0; i < len; i++) {
-    if (valuesMap[i] == lookupValue) {
+    if (strcmp(valuesMap[i], lookupValue) == 0) {
       return i;
     }
   }
@@ -345,7 +371,7 @@ int HeatPump::lookupByteMapIndex(const String valuesMap[], int len, String looku
 }
 
 
-String HeatPump::lookupByteMapValue(const String valuesMap[], const byte byteMap[], int len, byte byteValue) {
+const char* HeatPump::lookupByteMapValue(const char* valuesMap[], const byte byteMap[], int len, byte byteValue) {
   for (int i = 0; i < len; i++) {
     if (byteMap[i] == byteValue) {
       return valuesMap[i];
