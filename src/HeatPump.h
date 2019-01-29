@@ -156,6 +156,7 @@ class HeatPump
     bool firstRun;
     bool tempMode;
     bool externalUpdate;
+    int bitrate = 2400;
 
     String lookupByteMapValue(const String valuesMap[], const byte byteMap[], int len, byte byteValue);
     int    lookupByteMapValue(const int valuesMap[], const byte byteMap[], int len, byte byteValue);
@@ -187,6 +188,7 @@ class HeatPump
     // general
     HeatPump();
     bool connect(HardwareSerial *serial);
+    bool connect(HardwareSerial *serial, bool retry);
     bool update();
     void sync(byte packetType = PACKET_TYPE_DEFAULT);
     void enableExternalUpdate();
