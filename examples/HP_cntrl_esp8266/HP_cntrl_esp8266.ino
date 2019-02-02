@@ -9,7 +9,7 @@ const char* ssid = "esp8266";
 const char* html = "<html>\n<head>\n<meta name='viewport' content='width=device-width, initial-scale=2'/>\n"
                    "<meta http-equiv='refresh' content='_RATE_; url=/'/>\n"
                    "<style></style>\n"
-                   "<body><h3>Heat Pump Demo</h3>TEMP: _ROOMTEMP_\n&deg;C<form>\n<table>\n"
+                   "<body><h3>Heat Pump Demo</h3>TEMP: _ROOMTEMP_\n&deg;C<form autocomplete='off' method='post' action=''>\n<table>\n"
                    "<tr>\n<td>Power:</td>\n<td>\n_POWER_</td>\n</tr>\n"
                    "<tr>\n<td>Mode:</td>\n<td>\n_MODE_</td>\n</tr>\n"
                    "<tr>\n<td>Temp:</td>\n<td>\n_TEMP_</td>\n</tr>"
@@ -91,7 +91,7 @@ void handle_root() {
   String mode[5] = {"HEAT", "DRY", "COOL", "FAN", "AUTO"};
   toSend.replace("_MODE_", createOptionSelector("MODE", mode, 5, hp.getModeSetting()));
   String temp[16] = {"31", "30", "29", "28", "27", "26", "25", "24", "23", "22", "21", "20", "19", "18", "17", "16"};
-  toSend.replace("_TEMP_", createOptionSelector("TEMP", temp, 16, String(hp.getTemperature())));
+  toSend.replace("_TEMP_", createOptionSelector("TEMP", temp, 16, String(hp.getTemperature()).substring(0,2)));
   String fan[6] = {"AUTO", "QUIET", "1", "2", "3", "4"};
   toSend.replace("_FAN_", createOptionSelector("FAN", fan, 6, hp.getFanSpeed()));
   String vane[7] = {"AUTO", "1", "2", "3", "4", "5", "SWING"};
