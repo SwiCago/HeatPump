@@ -101,7 +101,7 @@ void loop() {
 
 <https://nicegear.co.nz/blog/hacking-a-mitsubishi-heat-pump-air-conditioner/>
 
-## Licence
+## License
 
 Licensed under the GNU Lesser General Public License.
 https://www.gnu.org/licenses/lgpl.html
