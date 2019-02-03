@@ -185,7 +185,7 @@ class MqttClimate(ClimateDevice):
             # This is also be set via the mqtt callback 
             self._target_temperature = kwargs.get(ATTR_TEMPERATURE)
         self._publish_temperature()
-        self.update_ha_state()
+        self.schedule_update_ha_state()
 
     def set_fan_mode(self, fan):
         """Set new fan mode."""
