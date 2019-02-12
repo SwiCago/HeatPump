@@ -72,6 +72,7 @@ class MqttClimate(ClimateDevice):
         """Initialize the MQTT Heatpump."""
         self._state = False
         self._hass = hass
+        self.hass = hass
         self._name = name
         self._state_topic = state_topic
         self._temperature_state_topic = temperature_state_topic
