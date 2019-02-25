@@ -8,7 +8,7 @@
 #include <PubSubClient.h>
 #include <HeatPump.h>
 
-#include "mitsubishi_heatpump_mqtt_esp8266.h"
+#include "mitsubishi_heatpump_mqtt_esp8266_esp32.h"
 
 #ifdef OTA
   #ifdef ESP32
