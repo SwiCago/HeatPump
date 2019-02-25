@@ -1,5 +1,9 @@
 
-#include <ESP8266WiFi.h>
+#ifdef ESP32
+  #include <WiFi.h>
+#else
+  #include <ESP8266WiFi.h>
+#endif
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
 #include <HeatPump.h>
@@ -7,7 +11,12 @@
 #include "mitsubishi_heatpump_mqtt_esp8266.h"
 
 #ifdef OTA
-  #include <ESP8266mDNS.h>
+  #ifdef ESP32
+    #include <WiFiUdp.h>
+    #include <ESPmDNS.h>
+  #else
+    #include <ESP8266mDNS.h>
+  #endif
   #include <ArduinoOTA.h>
 #endif
 
