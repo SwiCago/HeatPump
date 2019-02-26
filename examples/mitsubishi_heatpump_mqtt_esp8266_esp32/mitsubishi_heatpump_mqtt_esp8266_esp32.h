@@ -1,5 +1,6 @@
 
 //#define OTA
+//#define ESP32
 
 // wifi settings
 const char* ssid     = "<YOUR WIFI SSID GOES HERE>";
