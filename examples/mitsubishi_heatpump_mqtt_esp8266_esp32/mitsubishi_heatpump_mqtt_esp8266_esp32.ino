@@ -37,6 +37,7 @@ void setup() {
   pinMode(blueLedPin, OUTPUT);
   digitalWrite(blueLedPin, HIGH);
 
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
