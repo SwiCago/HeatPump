@@ -2,7 +2,8 @@
 
 ###Installation:
 
-Copy mitsubishi_mqtt.py to <home assistant config directory>/custom_components/climate/
+Copy custom_components folder to home assistant config directory.
+Resulting folder structure should be <home assistant config directory>/custom_components/mitsubishi_mqtt/climate.py
 
 Add the following to your configuration:
 ```c++
