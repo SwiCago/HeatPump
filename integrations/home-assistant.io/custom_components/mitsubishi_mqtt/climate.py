@@ -14,14 +14,17 @@ from homeassistant.components.mqtt import (
 
 from homeassistant.components.mqtt.climate import (
     CONF_TEMPERATURE_STATE_TOPIC)
-
+	
 from homeassistant.components.climate import (
-    ClimateDevice, SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE,
+    ClimateDevice)
+
+from homeassistant.components.climate.const import (
+    SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE,
     SUPPORT_FAN_MODE, SUPPORT_SWING_MODE,
-	STATE_AUTO, STATE_COOL, STATE_DRY, STATE_HEAT, STATE_FAN_ONLY, STATE_OFF)
+	STATE_AUTO, STATE_COOL, STATE_DRY, STATE_HEAT, STATE_FAN_ONLY)
 
 from homeassistant.const import (
-    CONF_NAME, CONF_VALUE_TEMPLATE, TEMP_CELSIUS, ATTR_TEMPERATURE)
+    CONF_NAME, CONF_VALUE_TEMPLATE, TEMP_CELSIUS, ATTR_TEMPERATURE, STATE_OFF)
 
 import homeassistant.components.mqtt as mqtt
 import homeassistant.helpers.config_validation as cv
