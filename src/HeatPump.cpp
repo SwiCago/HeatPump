@@ -285,9 +285,9 @@ const char* HeatPump::getWideVaneSetting() {
 void HeatPump::setWideVaneSetting(const char* setting) {
   int index = lookupByteMapIndex(WIDEVANE_MAP, 7, setting);
   if (index > -1) {
-    wantedSettings.wideVane = VANE_MAP[index];
+    wantedSettings.wideVane = WIDEVANE_MAP[index];
   } else {
-    wantedSettings.wideVane = VANE_MAP[0];
+    wantedSettings.wideVane = WIDEVANE_MAP[0];
   }
 }
 
