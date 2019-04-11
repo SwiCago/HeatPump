@@ -83,7 +83,7 @@ HeatPump::HeatPump() {
 // Public Methods //////////////////////////////////////////////////////////////
 
 bool HeatPump::connect(HardwareSerial *serial) {
-	connect(serial,true);
+	return connect(serial,true);
 }
 
 bool HeatPump::connect(HardwareSerial *serial, bool retry) {
@@ -462,8 +462,12 @@ void HeatPump::createInfoPacket(byte *packet, byte packetType) {
     packet[5] = INFOMODE[packetType];
   } else {
     // request current infoMode, and increment for the next request
-    packet[5] = INFOMODE[infoMode]; 
-    infoMode = (infoMode == (INFOMODE_LEN - 1)) ? 0 : infoMode += 1;
+    packet[5] = INFOMODE[infoMode];
+    if(infoMode == (INFOMODE_LEN - 1)) {
+      infoMode = 0;
+    } else {
+      infoMode++;
+    }
   }
 
   // pad the packet out
@@ -592,7 +596,6 @@ int HeatPump::readPacket() {
             case 0x03: { //Room temperature reading
               heatpumpStatus receivedStatus;
 
-              float receivedRoomTemp;
               if(data[6] != 0x00) {
                 int temp = data[6];
                 temp -= 128;
