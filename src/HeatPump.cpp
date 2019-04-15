@@ -123,8 +123,13 @@ bool HeatPump::update() {
   int packetType = readPacket();
   
   if(packetType == RCVD_PKT_UPDATE_SUCCESS) {
-    // call sync() to get the latest settings from the heatpump, which should now have the updated settings
-    sync(RQST_PKT_SETTINGS);
+    // call sync() to get the latest settings from the heatpump for autoUpdate, which should now have the updated settings
+    if(autoUpdate) { //this sync will happen regardless, but autoUpdate needs it sooner than later.
+	    while(!canSend(true)) { 
+		    delay(10); 
+	    } 
+	    sync(RQST_PKT_SETTINGS); 
+    }
 
     return true;
   } else {
