@@ -13,7 +13,7 @@ from homeassistant.components.mqtt import (
     CONF_STATE_TOPIC, CONF_COMMAND_TOPIC, CONF_QOS, CONF_RETAIN)
 
 from homeassistant.components.mqtt.climate import (
-    CONF_TEMPERATURE_STATE_TOPIC)
+    CONF_TEMP_STATE_TOPIC)
 	
 from homeassistant.components.climate import (
     ClimateDevice)
@@ -42,7 +42,7 @@ SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE | SUPPORT_FA
 
 PLATFORM_SCHEMA = mqtt.MQTT_RW_PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_TEMPERATURE_STATE_TOPIC): mqtt.valid_subscribe_topic
+    vol.Optional(CONF_TEMP_STATE_TOPIC): mqtt.valid_subscribe_topic
 })
 
 TARGET_TEMPERATURE_STEP = 1
@@ -60,7 +60,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
         hass,
         config.get(CONF_NAME),
         config.get(CONF_STATE_TOPIC),
-        config.get(CONF_TEMPERATURE_STATE_TOPIC),
+        config.get(CONF_TEMP_STATE_TOPIC),
         config.get(CONF_COMMAND_TOPIC),
         config.get(CONF_QOS),
         config.get(CONF_RETAIN),
