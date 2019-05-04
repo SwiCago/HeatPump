@@ -37,6 +37,7 @@ void setup() {
   pinMode(blueLedPin, OUTPUT);
   digitalWrite(blueLedPin, HIGH);
 
+  WiFi.hostname(client_id);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
@@ -59,6 +60,8 @@ void setup() {
   hp.setPacketCallback(hpPacketDebug);
 
 #ifdef OTA
+  ArduinoOTA.setHostname(client_id);
+  ArduinoOTA.setPassword(ota_password);
   ArduinoOTA.begin();
 #endif
 
