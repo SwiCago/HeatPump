@@ -1,7 +1,7 @@
 
 //#define ESP32
 //#define OTA
-//const char* otaPassword = "<YOUR OTA PASSWORD GOES HERE>";
+//const char* ota_password = "<YOUR OTA PASSWORD GOES HERE>";
 
 // wifi settings
 const char* ssid     = "<YOUR WIFI SSID GOES HERE>";
