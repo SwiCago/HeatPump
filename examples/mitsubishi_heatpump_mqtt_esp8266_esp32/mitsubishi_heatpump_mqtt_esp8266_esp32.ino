@@ -61,7 +61,7 @@ void setup() {
 
 #ifdef OTA
   ArduinoOTA.setHostname(client_id);
-  ArduinoOTA.setPassword(otaPassword);
+  ArduinoOTA.setPassword(ota_password);
   ArduinoOTA.begin();
 #endif
 
