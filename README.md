@@ -58,7 +58,7 @@ void loop() {
 - PULL or download zip.
 - Move contents into Arduino library directory
 - Restart IDE, samples should be avaliable
-- NOTE: Requires arduino json 6, older commits as of 20190505 support json 5.
+- NOTE: Requires arduino json 6, older commits before 20190505 support json 5.
 ## Notes
 
 - Tested with ESP8266
