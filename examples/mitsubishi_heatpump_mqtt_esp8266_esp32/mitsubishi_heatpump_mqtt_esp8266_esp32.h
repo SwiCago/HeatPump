@@ -1,6 +1,7 @@
 
-//#define OTA
 //#define ESP32
+//#define OTA
+//const char* ota_password = "<YOUR OTA PASSWORD GOES HERE>";
 
 // wifi settings
 const char* ssid     = "<YOUR WIFI SSID GOES HERE>";
@@ -14,7 +15,7 @@ const char* mqtt_password = "<YOUR MQTT PASSWORD GOES HERE>";
 
 // mqtt client settings
 // Note PubSubClient.h has a MQTT_MAX_PACKET_SIZE of 128 defined, so either raise it to 256 or use short topics
-const char* client_id                   = "heatpump-controller-1"; // Must be unique on the MQTT network
+const char* client_id                   = "heatpump"; // Must be unique on the MQTT network
 const char* heatpump_topic              = "heatpump";
 const char* heatpump_set_topic          = "heatpump/set";
 const char* heatpump_status_topic       = "heatpump/status";
