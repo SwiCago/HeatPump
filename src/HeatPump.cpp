@@ -83,7 +83,7 @@ HeatPump::HeatPump() {
 // Public Methods //////////////////////////////////////////////////////////////
 
 bool HeatPump::connect(HardwareSerial *serial) {
-	connect(serial,true);
+	return connect(serial,true);
 }
 
 bool HeatPump::connect(HardwareSerial *serial, bool retry) {
@@ -123,8 +123,13 @@ bool HeatPump::update() {
   int packetType = readPacket();
   
   if(packetType == RCVD_PKT_UPDATE_SUCCESS) {
-    // call sync() to get the latest settings from the heatpump, which should now have the updated settings
-    sync(RQST_PKT_SETTINGS);
+    // call sync() to get the latest settings from the heatpump for autoUpdate, which should now have the updated settings
+    if(autoUpdate) { //this sync will happen regardless, but autoUpdate needs it sooner than later.
+	    while(!canSend(true)) { 
+		    delay(10); 
+	    } 
+	    sync(RQST_PKT_SETTINGS); 
+    }
 
     return true;
   } else {
@@ -285,9 +290,9 @@ const char* HeatPump::getWideVaneSetting() {
 void HeatPump::setWideVaneSetting(const char* setting) {
   int index = lookupByteMapIndex(WIDEVANE_MAP, 7, setting);
   if (index > -1) {
-    wantedSettings.wideVane = VANE_MAP[index];
+    wantedSettings.wideVane = WIDEVANE_MAP[index];
   } else {
-    wantedSettings.wideVane = VANE_MAP[0];
+    wantedSettings.wideVane = WIDEVANE_MAP[0];
   }
 }
 
@@ -462,8 +467,12 @@ void HeatPump::createInfoPacket(byte *packet, byte packetType) {
     packet[5] = INFOMODE[packetType];
   } else {
     // request current infoMode, and increment for the next request
-    packet[5] = INFOMODE[infoMode]; 
-    infoMode = (infoMode == (INFOMODE_LEN - 1)) ? 0 : infoMode += 1;
+    packet[5] = INFOMODE[infoMode];
+    if(infoMode == (INFOMODE_LEN - 1)) {
+      infoMode = 0;
+    } else {
+      infoMode++;
+    }
   }
 
   // pad the packet out
@@ -592,7 +601,6 @@ int HeatPump::readPacket() {
             case 0x03: { //Room temperature reading
               heatpumpStatus receivedStatus;
 
-              float receivedRoomTemp;
               if(data[6] != 0x00) {
                 int temp = data[6];
                 temp -= 128;

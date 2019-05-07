@@ -1,0 +1,8 @@
+{
+    "domain": "mitsubishi_mqtt",
+    "name": "mitsubishi_mqtt",
+    "documentation": "https://github.com/SwiCago/HeatPump/tree/master/integrations/home-assistant.io",
+    "dependencies": ["mqtt"],
+    "codeowners": [],
+    "requirements": []
+}

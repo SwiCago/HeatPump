@@ -13,6 +13,7 @@ Modify and flash arduino code.  Specifically pay close attention to .h file.  Ma
 ### Requirements:
 - Transformations: Map
 - Bindings: mqtt1
+- NOTE: this .ino is still based on json 5, see root examples if you need json6
 
 ### Config:
 This assumes basic understanding of OH configuration, bindings, files and concepts.  Also that you have a functioning OH instance already running.  See https://www.openhab.org/docs/ for OH specific documents.

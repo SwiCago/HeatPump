@@ -12,13 +12,19 @@ import voluptuous as vol
 from homeassistant.components.mqtt import (
     CONF_STATE_TOPIC, CONF_COMMAND_TOPIC, CONF_QOS, CONF_RETAIN)
 
+from homeassistant.components.mqtt.climate import (
+    CONF_TEMP_STATE_TOPIC)
+	
 from homeassistant.components.climate import (
-    ClimateDevice, SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE,
+    ClimateDevice)
+
+from homeassistant.components.climate.const import (
+    SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE,
     SUPPORT_FAN_MODE, SUPPORT_SWING_MODE,
-	STATE_AUTO, STATE_COOL, STATE_DRY, STATE_HEAT, STATE_FAN_ONLY, STATE_OFF)
+	STATE_AUTO, STATE_COOL, STATE_DRY, STATE_HEAT, STATE_FAN_ONLY)
 
 from homeassistant.const import (
-    CONF_NAME, CONF_VALUE_TEMPLATE, TEMP_CELSIUS, ATTR_TEMPERATURE)
+    CONF_NAME, CONF_VALUE_TEMPLATE, TEMP_CELSIUS, ATTR_TEMPERATURE, STATE_OFF)
 
 import homeassistant.components.mqtt as mqtt
 import homeassistant.helpers.config_validation as cv
@@ -36,6 +42,7 @@ SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE | SUPPORT_FA
 
 PLATFORM_SCHEMA = mqtt.MQTT_RW_PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+    vol.Optional(CONF_TEMP_STATE_TOPIC): mqtt.valid_subscribe_topic
 })
 
 TARGET_TEMPERATURE_STEP = 1
@@ -52,8 +59,8 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     add_devices([MqttClimate(
         hass,
         config.get(CONF_NAME),
-        config.get('state_topic'),
-        config.get('temperature_state_topic'),
+        config.get(CONF_STATE_TOPIC),
+        config.get(CONF_TEMP_STATE_TOPIC),
         config.get(CONF_COMMAND_TOPIC),
         config.get(CONF_QOS),
         config.get(CONF_RETAIN),
@@ -68,6 +75,7 @@ class MqttClimate(ClimateDevice):
         """Initialize the MQTT Heatpump."""
         self._state = False
         self._hass = hass
+        self.hass = hass
         self._name = name
         self._state_topic = state_topic
         self._temperature_state_topic = temperature_state_topic
