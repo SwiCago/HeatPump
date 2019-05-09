@@ -136,7 +136,7 @@ void hpPacketDebug(byte* packet, unsigned int length, char* packetDirection) {
       message += String(packet[idx], HEX) + " ";
     }
 
-    const size_t bufferSize = JSON_OBJECT_SIZE(1);
+    const size_t bufferSize = JSON_OBJECT_SIZE(8);
     DynamicJsonDocument root(bufferSize);
 
     root[packetDirection] = message;
