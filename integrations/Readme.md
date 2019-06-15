@@ -3,3 +3,6 @@ If you have issues with these examples, I suggest you join the gitter chat and a
 probably more than willing to update them via pull requests.
 
 do not open issues for non library related issues!
+
+Here is a link for Domoticz MQTT plugin
+https://github.com/Masurov/Domoticz-MitsubishiHpMQTT-Plugin/
