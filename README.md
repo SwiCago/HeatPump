@@ -60,8 +60,8 @@ void loop() {
 - Restart IDE, samples should be avaliable
 - NOTE: Requires arduino json 6, older commits before 20190505 support json 5.
 - If you find this all a little confusing, check out this write up blog/install by Chris Davis
-https://chrdavis.github.io/hacking-a-mitsubishi-heat-pump-Part-1/
-https://chrdavis.github.io/hacking-a-mitsubishi-heat-pump-Part-2/
+    - https://chrdavis.github.io/hacking-a-mitsubishi-heat-pump-Part-1/
+    - https://chrdavis.github.io/hacking-a-mitsubishi-heat-pump-Part-2/
 
 ## Notes
 
