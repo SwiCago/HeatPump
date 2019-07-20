@@ -21,12 +21,14 @@ from homeassistant.components.climate import (
     ClimateDevice)
 
 from homeassistant.components.climate.const import (
-    SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE,
-    SUPPORT_FAN_MODE, SUPPORT_SWING_MODE,
-    STATE_AUTO, STATE_COOL, STATE_DRY, STATE_HEAT, STATE_FAN_ONLY)
+    SUPPORT_TARGET_TEMPERATURE, SUPPORT_FAN_MODE, SUPPORT_SWING_MODE,
+    HVAC_MODE_AUTO, HVAC_MODE_COOL, HVAC_MODE_DRY, HVAC_MODE_HEAT,
+    HVAC_MODE_FAN_ONLY, HVAC_MODE_OFF, CURRENT_HVAC_OFF,
+    CURRENT_HVAC_HEAT, CURRENT_HVAC_COOL, CURRENT_HVAC_DRY,
+    CURRENT_HVAC_IDLE)
 
 from homeassistant.const import (
-    CONF_NAME, CONF_VALUE_TEMPLATE, TEMP_CELSIUS, ATTR_TEMPERATURE, STATE_OFF)
+    CONF_NAME, CONF_VALUE_TEMPLATE, TEMP_CELSIUS, ATTR_TEMPERATURE)
 
 import homeassistant.components.mqtt as mqtt
 import homeassistant.helpers.config_validation as cv
@@ -37,8 +39,8 @@ DEPENDENCIES = ['mqtt']
 
 DEFAULT_NAME = 'MQTT Climate'
 
-SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE | \
-    SUPPORT_FAN_MODE | SUPPORT_SWING_MODE
+SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE | \
+    SUPPORT_SWING_MODE
 
 PLATFORM_SCHEMA = mqtt.MQTT_RW_PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
@@ -48,19 +50,19 @@ PLATFORM_SCHEMA = mqtt.MQTT_RW_PLATFORM_SCHEMA.extend({
 TARGET_TEMPERATURE_STEP = 1
 
 HA_TO_ME = {
-    STATE_AUTO: 'AUTO',
-    STATE_COOL: 'COOL',
-    STATE_DRY: 'DRY',
-    STATE_HEAT: 'HEAT',
-    STATE_FAN_ONLY: 'FAN',
-    STATE_OFF: 'OFF'
+    HVAC_MODE_AUTO: 'AUTO',
+    HVAC_MODE_COOL: 'COOL',
+    HVAC_MODE_DRY: 'DRY',
+    HVAC_MODE_HEAT: 'HEAT',
+    HVAC_MODE_FAN_ONLY: 'FAN',
+    HVAC_MODE_OFF: 'OFF'
 }
 
 ME_TO_HA = {v: k for k, v in HA_TO_ME.items()}
 
-FAN_LIST = ['AUTO', 'QUIET', '1', '2', '3', '4']
-OPERATION_LIST = ['AUTO', 'COOL', 'DRY', 'HEAT', 'FAN', 'OFF']
-SWING_LIST = ['AUTO', '1', '2', '3', '4', '5', 'SWING']
+FAN_MODES = ['AUTO', 'QUIET', '1', '2', '3', '4']
+HVAC_MODES = ['AUTO', 'COOL', 'DRY', 'HEAT', 'FAN', 'OFF']
+SWING_MODES = ['AUTO', '1', '2', '3', '4', '5', 'SWING']
 
 
 # pylint: disable=unused-argument
@@ -82,7 +84,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     )])
 
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,abstract-method
 class MqttClimate(ClimateDevice):
     """
     Representation of a Mistsubishi Minisplit Heatpump controlled
@@ -107,6 +109,7 @@ class MqttClimate(ClimateDevice):
         self._target_temperature = None
         self._current_fan_mode = None
         self._current_operation = None
+        self._current_status = False
         self._current_power = None
         self._current_swing_mode = None
 
@@ -129,6 +132,7 @@ class MqttClimate(ClimateDevice):
             elif msg.topic == self._temperature_state_topic:
                 _LOGGER.debug('Room Temp: %s', parsed['roomTemperature'])
                 self._current_temperature = float(parsed['roomTemperature'])
+                self._current_status = bool(parsed['operating'])
             else:
                 _LOGGER.debug('Unknown topic: %s', msg.topic)
 
@@ -137,9 +141,8 @@ class MqttClimate(ClimateDevice):
             _LOGGER.debug('Power=%s, Operation=%s', self._current_power,
                           self._current_operation)
 
-        for topic in [self._state_topic, self._temperature_state_topic]:
-            mqtt.subscribe(
-                hass, topic, message_received, self._qos)
+        for topic in (self._state_topic, self._temperature_state_topic):
+            mqtt.subscribe(hass, topic, message_received, self._qos)
 
     @property
     def supported_features(self):
@@ -153,7 +156,7 @@ class MqttClimate(ClimateDevice):
 
     @property
     def should_poll(self):
-        """Polling not needed for a demo climate device."""
+        """Polling not needed."""
         return False
 
     @property
@@ -177,37 +180,52 @@ class MqttClimate(ClimateDevice):
         return self._current_temperature
 
     @property
-    def current_fan_mode(self):
+    def fan_mode(self):
         """Return the fan setting."""
         return self._current_fan_mode.capitalize()
 
     @property
-    def fan_list(self):
+    def fan_modes(self):
         """List of available fan modes."""
-        return [k.capitalize() for k in FAN_LIST]
+        return [k.capitalize() for k in FAN_MODES]
 
     @property
-    def current_operation(self):
+    def hvac_action(self):
+        if self._current_power == 'OFF':
+            return CURRENT_HVAC_OFF
+
+        if self._current_status:
+            if self._current_operation == 'HEAT':
+                return CURRENT_HVAC_HEAT
+            if self._current_operation == 'COOL':
+                return CURRENT_HVAC_COOL
+            if self._current_operation == 'DRY':
+                return CURRENT_HVAC_DRY
+
+        return CURRENT_HVAC_IDLE
+
+    @property
+    def hvac_mode(self):
         """Return current operation ie. heat, cool, idle."""
         if self._current_power == 'OFF':
-            return STATE_OFF
+            return HVAC_MODE_OFF
 
         return ME_TO_HA[self._current_operation]
 
     @property
-    def operation_list(self):
+    def hvac_modes(self):
         """List of available operation modes."""
-        return [ME_TO_HA[k] for k in OPERATION_LIST]
+        return [ME_TO_HA[k] for k in HVAC_MODES]
 
     @property
-    def current_swing_mode(self):
+    def swing_mode(self):
         """Return the swing setting."""
         return self._current_swing_mode.capitalize()
 
     @property
-    def swing_list(self):
+    def swing_modes(self):
         """List of available swing modes."""
-        return [k.capitalize() for k in SWING_LIST]
+        return [k.capitalize() for k in SWING_MODES]
 
     def set_temperature(self, **kwargs):
         """Set new target temperatures."""
@@ -225,10 +243,10 @@ class MqttClimate(ClimateDevice):
 
         self.schedule_update_ha_state()
 
-    def set_fan_mode(self, fan):
+    def set_fan_mode(self, fan_mode):
         """Set new fan mode."""
-        if fan is not None:
-            self._current_fan_mode = fan.upper()
+        if fan_mode is not None:
+            self._current_fan_mode = fan_mode.upper()
 
             payload = {'fan': self._current_fan_mode}
 
@@ -236,9 +254,9 @@ class MqttClimate(ClimateDevice):
                          self._qos, self._retain)
             self.schedule_update_ha_state()
 
-    def set_operation_mode(self, operation_mode):
+    def set_hvac_mode(self, hvac_mode):
         """Set new operating mode."""
-        self._current_operation = HA_TO_ME[operation_mode]
+        self._current_operation = HA_TO_ME[hvac_mode]
 
         if self._current_operation == 'OFF':
             payload = {'power': 'OFF'}
@@ -251,10 +269,10 @@ class MqttClimate(ClimateDevice):
                      self._qos, self._retain)
         self.schedule_update_ha_state()
 
-    def set_swing_mode(self, swing):
+    def set_swing_mode(self, swing_mode):
         """Set new swing mode."""
-        if swing is not None:
-            self._current_swing_mode = swing.upper()
+        if swing_mode is not None:
+            self._current_swing_mode = swing_mode.upper()
 
             payload = {'vane': self._current_swing_mode}
 
