@@ -210,7 +210,7 @@ class MqttClimate(ClimateDevice):
         if self._current_power == 'OFF':
             return HVAC_MODE_OFF
 
-        return ME_TO_HA[self._current_operation]
+        return ME_TO_HA.get(self._current_operation)
 
     @property
     def hvac_modes(self):
