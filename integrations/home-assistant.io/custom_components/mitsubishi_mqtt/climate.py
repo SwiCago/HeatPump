@@ -20,7 +20,8 @@ from homeassistant.components.climate import (
 from homeassistant.components.climate.const import (
     SUPPORT_TARGET_TEMPERATURE,
     SUPPORT_FAN_MODE, SUPPORT_SWING_MODE,
-    HVAC_MODE_AUTO, HVAC_MODE_OFF, HVAC_MODE_COOL, HVAC_MODE_DRY, HVAC_MODE_HEAT, HVAC_MODE_FAN_ONLY)
+    HVAC_MODE_AUTO, HVAC_MODE_OFF, HVAC_MODE_COOL, HVAC_MODE_DRY, HVAC_MODE_HEAT, HVAC_MODE_FAN_ONLY,
+    CURRENT_HVAC_OFF, CURRENT_HVAC_HEAT, CURRENT_HVAC_COOL, CURRENT_HVAC_DRY, CURRENT_HVAC_IDLE, CURRENT_HVAC_FAN)
 from homeassistant.const import (
     CONF_NAME, CONF_VALUE_TEMPLATE, TEMP_CELSIUS, ATTR_TEMPERATURE)
 
@@ -91,6 +92,7 @@ class MqttClimate(ClimateDevice):
         self._hvac_modes = modes
         self._hvac_mode = None
         self._current_power = None
+        self._current_status = False
         self._swing_modes = ["AUTO", "1", "2", "3", "4", "5", "SWING"]
         self._swing_mode = None
         self._sub_state = None
@@ -131,6 +133,7 @@ class MqttClimate(ClimateDevice):
             elif topic == self._temperature_state_topic:
                 _LOGGER.debug('Room Temp: {0}'.format(parsed['roomTemperature']))
                 self._current_temperature = float(parsed['roomTemperature'])
+                self._current_status = bool(parsed['operating'])
             else:
                 print("unknown topic")
             self.async_write_ha_state()
@@ -196,6 +199,23 @@ class MqttClimate(ClimateDevice):
     def fan_modes(self):
         """List of available fan modes."""
         return [k.capitalize() for k in self._fan_modes]
+
+    @property
+    def hvac_action(self):
+        if self._current_power == 'OFF':
+            return CURRENT_HVAC_OFF
+
+        if self._current_status:
+            if self._hvac_mode == 'HEAT':
+                return CURRENT_HVAC_HEAT
+            if self._hvac_mode == 'COOL':
+                return CURRENT_HVAC_COOL
+            if self._hvac_mode == 'DRY':
+                return CURRENT_HVAC_DRY
+            if self._hvac_mode == 'FAN':
+                return CURRENT_HVAC_FAN
+
+        return CURRENT_HVAC_IDLE
 
     @property
     def hvac_mode(self):
