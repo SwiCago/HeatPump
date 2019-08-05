@@ -71,7 +71,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
 
 
 class MqttClimate(ClimateDevice):
-    """Representation of a Mistsubishi Minisplit Heatpump controlled over MQTT."""
+    """Representation of a Mitsubishi Minisplit Heatpump controlled over MQTT."""
 
 
     def __init__(self, hass, name, state_topic, temperature_state_topic, command_topic, modes, qos, retain):
