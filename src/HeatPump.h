@@ -148,6 +148,7 @@ class HeatPump
   
     HardwareSerial * _HardSerial;
     unsigned long lastSend;
+    bool waitForRead;
     int infoMode;
     unsigned long lastRecv;
     bool connected = false;
@@ -163,6 +164,7 @@ class HeatPump
     int    lookupByteMapIndex(const int valuesMap[], int len, int lookupValue);
 
     bool canSend(bool isInfo);
+    bool canRead();
     byte checkSum(byte bytes[], int len);
     void createPacket(byte *packet, heatpumpSettings settings);
     void createInfoPacket(byte *packet, byte packetType);
@@ -218,6 +220,7 @@ class HeatPump
     heatpumpStatus getStatus();
     float getRoomTemperature();
     bool getOperating();
+    bool isConnected();
 
     // helpers
     float FahrenheitToCelsius(int tempF);

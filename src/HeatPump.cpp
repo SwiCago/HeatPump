@@ -76,6 +76,7 @@ HeatPump::HeatPump() {
   autoUpdate = false;
   firstRun = true;
   tempMode = false;
+  waitForRead = false;
   externalUpdate = false;
   currentStatus = {0, false, {TIMER_MODE_MAP[0], 0, 0, 0, 0}}; // initialise to all off, then it will update shortly after connect
 }
@@ -104,6 +105,7 @@ bool HeatPump::connect(HardwareSerial *serial, bool retry) {
   memcpy(packet, CONNECT, CONNECT_LEN);
   //for(int count = 0; count < 2; count++) {
   writePacket(packet, CONNECT_LEN);
+  while(!canRead()) { delay(10); }
   int packetType = readPacket();
   if(packetType != RCVD_PKT_CONNECT_SUCCESS && retry){
 	  bitrate = (bitrate == 2400 ? 9600 : 2400);
@@ -119,16 +121,17 @@ bool HeatPump::update() {
   byte packet[PACKET_LEN] = {};
   createPacket(packet, wantedSettings);
   writePacket(packet, PACKET_LEN);
-  
+
+  while(!canRead()) { delay(10); }
   int packetType = readPacket();
-  
+
   if(packetType == RCVD_PKT_UPDATE_SUCCESS) {
     // call sync() to get the latest settings from the heatpump for autoUpdate, which should now have the updated settings
     if(autoUpdate) { //this sync will happen regardless, but autoUpdate needs it sooner than later.
-	    while(!canSend(true)) { 
-		    delay(10); 
-	    } 
-	    sync(RQST_PKT_SETTINGS); 
+	    while(!canSend(true)) {
+		    delay(10);
+	    }
+	    sync(RQST_PKT_SETTINGS);
     }
 
     return true;
@@ -141,16 +144,17 @@ void HeatPump::sync(byte packetType) {
   if((!connected) || (millis() - lastRecv > (PACKET_SENT_INTERVAL_MS * 10))) {
     connect(NULL);
   }
+  else if(canRead()) {
+    readPacket();
+  }
   else if(autoUpdate && !firstRun && wantedSettings != currentSettings && packetType == PACKET_TYPE_DEFAULT) {
-     update(); 
+    update();
   }
   else if(canSend(true)) {
     byte packet[PACKET_LEN] = {};
     createInfoPacket(packet, packetType);
     writePacket(packet, PACKET_LEN);
   }
-  
-  readPacket();
 }
 
 void HeatPump::enableExternalUpdate() {
@@ -167,6 +171,10 @@ void HeatPump::disableAutoUpdate() {
 
 heatpumpSettings HeatPump::getSettings() {
   return currentSettings;
+}
+
+bool HeatPump::isConnected() {
+  return connected;
 }
 
 void HeatPump::setSettings(heatpumpSettings settings) {
@@ -406,6 +414,10 @@ bool HeatPump::canSend(bool isInfo) {
   return (millis() - (isInfo ? PACKET_INFO_INTERVAL_MS : PACKET_SENT_INTERVAL_MS)) > lastSend;
 }  
 
+bool HeatPump::canRead() {
+  return (waitForRead && (millis() - PACKET_SENT_INTERVAL_MS) > lastSend);
+}
+
 byte HeatPump::checkSum(byte bytes[], int len) {
   byte sum = 0;
   for (int i = 0; i < len; i++) {
@@ -493,7 +505,7 @@ void HeatPump::writePacket(byte *packet, int length) {
   if(packetCallback) {
     packetCallback(packet, length, (char*)"packetSent");
   }
-  delay(1000);
+  waitForRead = true;
   lastSend = millis();
 }
 
@@ -505,6 +517,8 @@ int HeatPump::readPacket() {
   byte checksum = 0;
   byte dataLength = 0;
   
+  waitForRead = false;
+
   if(_HardSerial->available() > 0) {
     // read until we get start byte 0xfc
     while(_HardSerial->available() > 0 && !foundStart) {
@@ -547,7 +561,7 @@ int HeatPump::readPacket() {
   
       // calculate checksum
       checksum = (0xfc - dataSum) & 0xff;
-      
+
       if(data[dataLength] == checksum) {
         lastRecv = millis();
         if(packetCallback) {
