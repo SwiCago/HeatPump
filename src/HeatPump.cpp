@@ -594,7 +594,7 @@ int HeatPump::readPacket() {
 
               receivedSettings.fan         = lookupByteMapValue(FAN_MAP, FAN, 6, data[6]);
               receivedSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
-              receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10]);   
+              receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10] & 0x0F);   
               
               if(settingsChangedCallback && receivedSettings != currentSettings) {
                 currentSettings = receivedSettings;
