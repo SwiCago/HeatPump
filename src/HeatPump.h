@@ -156,6 +156,7 @@ class HeatPump
     bool firstRun;
     bool tempMode;
     bool externalUpdate;
+    bool wideVaneAdj;
     int bitrate = 2400;
 
     const char* lookupByteMapValue(const char* valuesMap[], const byte byteMap[], int len, byte byteValue);
