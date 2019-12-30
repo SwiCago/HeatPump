@@ -1,33 +1,9 @@
+THIS LIBRARY DOES NOT SUPPORT HOME ASSISTANT. THE FILES HERE WILL SOO BE DELETED.
+PLEASE REVIEW THESE LINKS FOR THIS INTEGRATION
 
+https://github.com/unixko/MitsuCon 
 
-###Installation:
+https://github.com/dzungpv/mitsubishi2MQTT
 
-Copy custom_components folder to home assistant config directory.
-Resulting folder structure should be <home assistant config directory>/custom_components/mitsubishi_mqtt/climate.py
+https://gist.github.com/kmdm/29f740e5f36036fb23daba8f2109c359
 
-Add the following to your configuration:
-```c++
-climate:
-   - platform: mitsubishi_mqtt
-     name: "Mistubishi Heatpump"
-     command_topic: "heatpump/set"
-     temperature_state_topic: "heatpump/status"
-     state_topic: "heatpump"
-
-```
-or for device not support HEAT mode, modes is optional
-```c++
-climate:
-   - platform: mitsubishi_mqtt
-     name: "Mistubishi Heatpump"
-     modes:
-      - "AUTO"
-      - "COOL"
-      - "DRY"
-      - "FAN"
-      - "OFF"
-     command_topic: "heatpump/set"
-     temperature_state_topic: "heatpump/status"
-     state_topic: "heatpump"
-
-```
