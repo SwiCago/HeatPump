@@ -244,8 +244,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       _debugMode = false;
       mqtt_client.publish(heatpump_debug_topic, "debug mode disabled");
     }
-  } else {
-    mqtt_client.publish(heatpump_debug_topic, strcat("heatpump: wrong mqtt topic: ", topic));
+  } else {//should never get called, as that would mean something went wrong with subscribe
+    mqtt_client.publish(heatpump_debug_topic, "heatpump: wrong topic received");
   }
 }
 
