@@ -1,3 +1,5 @@
+# note: this library does not support or maintain integrations. Someone contibuted this example. I have no use for it, nor know if it works. Use at your own discretion. If you have a problem, use the gitter chat. Do not open an issue, issues are for the library only!
+
 # Setup
 
 ## HP's
