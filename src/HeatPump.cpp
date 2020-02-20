@@ -459,11 +459,11 @@ void HeatPump::createPacket(byte *packet, heatpumpSettings settings) {
     packet[6] += CONTROL_PACKET_1[3];
   }
   if(settings.vane!= currentSettings.vane) {
-    packet[12] = VANE[lookupByteMapIndex(VANE_MAP, 7, settings.vane)] | (wideVaneAdj ? 0x80 : 0x00);
+    packet[12] = VANE[lookupByteMapIndex(VANE_MAP, 7, settings.vane)];
     packet[6] += CONTROL_PACKET_1[4];
   }
   if(settings.wideVane!= currentSettings.wideVane) {
-    packet[18] = WIDEVANE[lookupByteMapIndex(WIDEVANE_MAP, 7, settings.wideVane)];
+    packet[18] = WIDEVANE[lookupByteMapIndex(WIDEVANE_MAP, 7, settings.wideVane)] | (wideVaneAdj ? 0x80 : 0x00);
     packet[7] += CONTROL_PACKET_2[0];
   }
   // add the checksum
