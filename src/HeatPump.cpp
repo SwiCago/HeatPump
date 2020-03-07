@@ -80,6 +80,12 @@ HeatPump::HeatPump() {
   externalUpdate = false;
   wideVaneAdj = false;
   currentStatus = {0, false, {TIMER_MODE_MAP[0], 0, 0, 0, 0}}; // initialise to all off, then it will update shortly after connect
+  _HardSerial = NULL;
+  onConnectCallback = NULL;
+  settingsChangedCallback = NULL;
+  statusChangedCallback = NULL;
+  roomTempChangedCallback = NULL;
+  packetCallback = NULL;
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
