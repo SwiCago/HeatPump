@@ -141,12 +141,12 @@ class HeatPump
     static const int TIMER_INCREMENT_MINUTES = 10;
 
     // these settings will be initialised in connect()
-    heatpumpSettings currentSettings;
-    heatpumpSettings wantedSettings;
+    heatpumpSettings currentSettings {};
+    heatpumpSettings wantedSettings {};
 
-    heatpumpStatus currentStatus;
+    heatpumpStatus currentStatus {0, false, {TIMER_MODE_MAP[0], 0, 0, 0, 0}}; // initialise to all off, then it will update shortly after connect;
   
-    HardwareSerial * _HardSerial;
+    HardwareSerial * _HardSerial {nullptr};
     unsigned long lastSend;
     bool waitForRead;
     int infoMode;
@@ -173,11 +173,11 @@ class HeatPump
     void writePacket(byte *packet, int length);
 
     // callbacks
-    ON_CONNECT_CALLBACK_SIGNATURE;
-    SETTINGS_CHANGED_CALLBACK_SIGNATURE;
-    STATUS_CHANGED_CALLBACK_SIGNATURE;
-    PACKET_CALLBACK_SIGNATURE;
-    ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE;
+    ON_CONNECT_CALLBACK_SIGNATURE {nullptr};
+    SETTINGS_CHANGED_CALLBACK_SIGNATURE {nullptr};
+    STATUS_CHANGED_CALLBACK_SIGNATURE {nullptr};
+    PACKET_CALLBACK_SIGNATURE {nullptr};
+    ROOM_TEMP_CHANGED_CALLBACK_SIGNATURE {nullptr};
 
   public:
     // indexes for INFOMODE array (public so they can be optionally passed to sync())
