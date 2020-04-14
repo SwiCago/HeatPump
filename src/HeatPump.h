@@ -31,7 +31,7 @@
  * Callback function definitions. Code differs for the ESP8266 platform, which requires the functional library.
  * Based on callback implementation in the Arduino Client for MQTT library (https://github.com/knolleary/pubsubclient)
  */
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 #include <functional>
 #define ON_CONNECT_CALLBACK_SIGNATURE std::function<void()> onConnectCallback
 #define SETTINGS_CHANGED_CALLBACK_SIGNATURE std::function<void()> settingsChangedCallback
@@ -157,7 +157,6 @@ class HeatPump
     bool tempMode;
     bool externalUpdate;
     bool wideVaneAdj;
-    int bitrate = 2400;
 
     const char* lookupByteMapValue(const char* valuesMap[], const byte byteMap[], int len, byte byteValue);
     int    lookupByteMapValue(const int valuesMap[], const byte byteMap[], int len, byte byteValue);
@@ -190,7 +189,7 @@ class HeatPump
     // general
     HeatPump();
     bool connect(HardwareSerial *serial);
-    bool connect(HardwareSerial *serial, bool retry);
+    bool connect(HardwareSerial *serial, int bitrate);
     bool update();
     void sync(byte packetType = PACKET_TYPE_DEFAULT);
     void enableExternalUpdate();

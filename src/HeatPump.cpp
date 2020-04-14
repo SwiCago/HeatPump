@@ -84,12 +84,17 @@ HeatPump::HeatPump() {
 // Public Methods //////////////////////////////////////////////////////////////
 
 bool HeatPump::connect(HardwareSerial *serial) {
-	return connect(serial,true);
+	return connect(serial, 0);
 }
 
-bool HeatPump::connect(HardwareSerial *serial, bool retry) {
+bool HeatPump::connect(HardwareSerial *serial, int bitrate) {
   if(serial != NULL) {
     _HardSerial = serial;
+  }
+  bool retry = false;
+  if(bitrate == 0) {
+    bitrate = 2400;
+    retry = true;
   }
   connected = false;
   _HardSerial->begin(bitrate, SERIAL_8E1);
@@ -108,8 +113,7 @@ bool HeatPump::connect(HardwareSerial *serial, bool retry) {
   while(!canRead()) { delay(10); }
   int packetType = readPacket();
   if(packetType != RCVD_PKT_CONNECT_SUCCESS && retry){
-	  bitrate = (bitrate == 2400 ? 9600 : 2400);
-	  return connect(serial, false);
+	  return connect(serial, 9600);
   }
   return packetType == RCVD_PKT_CONNECT_SUCCESS;
   //}
