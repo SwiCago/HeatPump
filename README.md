@@ -62,7 +62,7 @@ void loop() {
 - If you find this all a little confusing, check out this write up blog/install by Chris Davis
     - https://chrdavis.github.io/hacking-a-mitsubishi-heat-pump-Part-1/
     - https://chrdavis.github.io/hacking-a-mitsubishi-heat-pump-Part-2/
-        - Note: some people report problems with Wemos D1 due to usb serial pulling RX high when usb idle! Fix is to cut a trace, so maybe use an alternative, if following thr above blog links.
+        - Note: some people report problems with Wemos D1 due to usb serial pulling RX high when usb idle! Fix is to cut a trace, so maybe use an alternative, if following the above blog links.
 ## Notes
 
 - Tested with ESP8266
