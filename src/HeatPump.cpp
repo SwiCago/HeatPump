@@ -166,6 +166,10 @@ void HeatPump::enableExternalUpdate() {
   externalUpdate = true;
 }
 
+void HeatPump::disableExternalUpdate() {
+  externalUpdate = false;
+}
+
 void HeatPump::enableAutoUpdate() {
   autoUpdate = true;
 }
