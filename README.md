@@ -53,6 +53,31 @@ By default the library ignores changes made from other sources (usually, the IR 
 
 If you want to also allow manual control and allow the library to update its settings from the current state of the heat pump you need to call `enableExternalUpdate()`. This will also enable automatic updates.
 
+### Callbacks
+
+Instead of manually checking settings changes on each loop, you can set callback functions to be called when the current heat pump status or settings change:
+
+```
+void hpSettingsChanged() {
+  // ...
+}
+
+void hpStatusChanged(heatpumpStatus currentStatus) {
+  // ...
+}
+
+void setup() {
+  hp.setSettingsChangedCallback(hpSettingsChanged);
+  hp.setStatusChangedCallback(hpStatusChanged);
+
+  hp.connect(&Serial);
+}
+```
+
+The callbacks will be called as necessary by the `sync()` method.
+
+You can see this in use in the [MQTT example](examples/mitsubishi_heatpump_mqtt_esp8266_esp32/mitsubishi_heatpump_mqtt_esp8266_esp32.ino).
+
 ## Contents
 
 - sources
