@@ -30,6 +30,8 @@ hp.update();
 
 [See heatPump_test.ino](examples/heatPump_test/heatPump_test.ino)
 
+You can make the library automatically send new settings to the heat pump by calling `enableAutoUpdate()`. When auto update is enabled the call to `update()` in the above example is not necessary, the new settings will be sent to the heat pump on the next call to `sync()` in `loop()`.
+
 ### Getting updates from the heat pump
 
 ```c++
@@ -46,6 +48,10 @@ void loop() {
 }
 
 ```
+
+By default the library ignores changes made from other sources (usually, the IR remote) and reverts them the next time `sync()` is called. This is the intendend behavior when the heat pump is fully controlled by automation.
+
+If you want to also allow manual control and allow the library to update its settings from the current state of the heat pump you need to call `enableExternalUpdate()`. This will also enable automatic updates.
 
 ## Contents
 
