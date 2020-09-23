@@ -162,7 +162,12 @@ void HeatPump::sync(byte packetType) {
 }
 
 void HeatPump::enableExternalUpdate() {
+  autoUpdate = true;
   externalUpdate = true;
+}
+
+void HeatPump::disableExternalUpdate() {
+  externalUpdate = false;
 }
 
 void HeatPump::enableAutoUpdate() {
