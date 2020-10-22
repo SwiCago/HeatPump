@@ -395,7 +395,7 @@ int HeatPump::lookupByteMapIndex(const int valuesMap[], int len, int lookupValue
 
 int HeatPump::lookupByteMapIndex(const char* valuesMap[], int len, const char* lookupValue) {
   for (int i = 0; i < len; i++) {
-    if (strcmp(valuesMap[i], lookupValue) == 0) {
+    if (strcasecmp(valuesMap[i], lookupValue) == 0) {
       return i;
     }
   }
