@@ -23,5 +23,3 @@ This assumes basic understanding of OH configuration, bindings, files and concep
 - Use the provided HP.items as examples to create your own .items file.  You will need to adjust the item names for each HP you have to something unique that makes sense to you as well as the mqtt topics to match the ones used in your arduino code earlier.
 - Use the provided HP.sitemap as examples on how to integrate your new items into your sitemap.
 - Don't forget to add your new items to any persistence config that meets your needs.
-
-I use Fahrenheit as I am US based.  Some tweaks will be needed to convert to C.  I think maybe just to the arduino code.
