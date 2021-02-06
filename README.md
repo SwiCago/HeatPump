@@ -139,4 +139,4 @@ You can see this in use in the [MQTT example](examples/mitsubishi_heatpump_mqtt_
 ## License
 
 Licensed under the GNU Lesser General Public License.
-https://www.gnu.org/licenses/lgpl.html
+https://www.gnu.org/licenses/lgpl-3.0.txt
