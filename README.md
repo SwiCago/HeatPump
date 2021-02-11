@@ -136,6 +136,9 @@ You can see this in use in the [MQTT example](examples/mitsubishi_heatpump_mqtt_
 
 <https://nicegear.co.nz/blog/hacking-a-mitsubishi-heat-pump-air-conditioner/>
 
+Wayback machine link as the site no longer exists:
+<https://web.archive.org/web/20171007190023/https://nicegear.co.nz/blog/hacking-a-mitsubishi-heat-pump-air-conditioner/>
+
 ## License
 
 Licensed under the GNU Lesser General Public License.
