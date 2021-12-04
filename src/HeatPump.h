@@ -144,7 +144,8 @@ class HeatPump
     heatpumpSettings currentSettings {};
     heatpumpSettings wantedSettings {};
 
-    heatpumpStatus currentStatus {0, false, {TIMER_MODE_MAP[0], 0, 0, 0, 0}}; // initialise to all off, then it will update shortly after connect;
+    // initialise to all off, then it will update shortly after connect;
+    heatpumpStatus currentStatus {0, false, {TIMER_MODE_MAP[0], 0, 0, 0, 0}, 0};
   
     HardwareSerial * _HardSerial {nullptr};
     unsigned long lastSend;
