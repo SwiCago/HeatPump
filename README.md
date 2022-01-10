@@ -121,7 +121,7 @@ You can see this in use in the [MQTT example](examples/mitsubishi_heatpump_mqtt_
 ### Other part suggestions
 
 - Premade pigtails
-    - <http://www.usastore.revolectrix.com/Products_2/Cellpro-4s-Charge-Adapters_2/Cellpro-JST-PA-Battery-Pigtail-10-5-Position>
+    - if you know of a supplier, speak up
 - ESP-01 module (4pk)
     - <https://www.amazon.com/gp/product/B01EA3UJJ4/>
 - Cheap 5V to 3.3V regulator (10pk), for those that don't want to make one
