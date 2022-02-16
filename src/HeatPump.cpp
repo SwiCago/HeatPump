@@ -79,15 +79,20 @@ HeatPump::HeatPump() {
   waitForRead = false;
   externalUpdate = false;
   wideVaneAdj = false;
+  functions = heatpumpFunctions();
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
 
 bool HeatPump::connect(HardwareSerial *serial) {
-	return connect(serial, 0);
+  return connect(serial, -1, -1);
 }
 
-bool HeatPump::connect(HardwareSerial *serial, int bitrate) {
+bool HeatPump::connect(HardwareSerial *serial, int rx, int tx) {
+	return connect(serial, 0, rx, tx);
+}
+
+bool HeatPump::connect(HardwareSerial *serial, int bitrate, int rx, int tx) {
   if(serial != NULL) {
     _HardSerial = serial;
   }
@@ -97,7 +102,11 @@ bool HeatPump::connect(HardwareSerial *serial, int bitrate) {
     retry = true;
   }
   connected = false;
-  _HardSerial->begin(bitrate, SERIAL_8E1);
+  if (rx >= 0 && tx >= 0) {
+    _HardSerial->begin(bitrate, SERIAL_8E1, rx, tx);
+  } else {
+    _HardSerial->begin(bitrate, SERIAL_8E1);
+  }
   if(onConnectCallback) {
     onConnectCallback();
   }
@@ -113,7 +122,7 @@ bool HeatPump::connect(HardwareSerial *serial, int bitrate) {
   while(!canRead()) { delay(10); }
   int packetType = readPacket();
   if(packetType != RCVD_PKT_CONNECT_SUCCESS && retry){
-	  return connect(serial, 9600);
+	  return connect(serial, 9600, rx, tx);
   }
   return packetType == RCVD_PKT_CONNECT_SUCCESS;
   //}
@@ -697,6 +706,20 @@ int HeatPump::readPacket() {
             case 0x09: { // standby mode maybe?
               break;
             }
+            
+            case 0x20:
+            case 0x22: {
+              if (dataLength == 0x10) {
+                if (data[0] == 0x20) {
+                  functions.setData1(&data[1]);
+                } else {
+                  functions.setData2(&data[1]);
+                }
+                  
+                return RCVD_PKT_FUNCTIONS;
+              }
+              break;
+            }
           } 
         } 
         
@@ -713,3 +736,141 @@ int HeatPump::readPacket() {
   return RCVD_PKT_FAIL;
 }
 
+heatpumpFunctions HeatPump::getFunctions() {
+  functions.clear();
+  
+  byte packet1[PACKET_LEN] = {0xFC, 0x42, 0x01, 0x30, 0x10, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5D};
+  byte packet2[PACKET_LEN] = {0xFC, 0x42, 0x01, 0x30, 0x10, 0x22, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5B};
+  
+  while(!canSend(false)) { delay(10); }
+  writePacket(packet1, PACKET_LEN);
+  readPacket();
+
+  while(!canSend(false)) { delay(10); }
+  writePacket(packet2, PACKET_LEN);
+  readPacket();
+
+  // retry reading a few times in case responses were related
+  // to other requests
+  for (int i = 0; i < 5 && !functions.isValid(); ++i) {
+    delay(100);
+    readPacket();
+  }
+
+  return functions;
+}
+
+bool HeatPump::setFunctions(heatpumpFunctions const& functions) {
+  if (!functions.isValid()) {
+    return false;
+  }
+
+  byte packet1[PACKET_LEN] = {0xFC, 0x41, 0x01, 0x30, 0x10, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  byte packet2[PACKET_LEN] = {0xFC, 0x41, 0x01, 0x30, 0x10, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  functions.getData1(&packet1[6]);
+  functions.getData2(&packet2[6]);
+
+  byte chkSum1 = checkSum(packet1, 21);
+  packet1[21] = chkSum1;
+  byte chkSum2 = checkSum(packet2, 21);
+  packet2[21] = chkSum2;
+
+  while(!canSend(false)) { delay(10); }
+  writePacket(packet1, PACKET_LEN);
+  readPacket();
+
+  while(!canSend(false)) { delay(10); }
+  writePacket(packet2, PACKET_LEN);
+  readPacket();
+
+  return true;
+}
+
+
+heatpumpFunctions::heatpumpFunctions() {
+  clear();
+}
+
+bool heatpumpFunctions::isValid() const {
+  return _isValid1 && _isValid2;
+}
+
+void heatpumpFunctions::setData1(byte* data) {
+  memcpy(raw, data, 15);
+  _isValid1 = true;
+}
+
+void heatpumpFunctions::setData2(byte* data) {
+  memcpy(raw + 15, data, 15);
+  _isValid2 = true;
+}
+
+void heatpumpFunctions::getData1(byte* data) const {
+  memcpy(data, raw, 15);
+}
+
+void heatpumpFunctions::getData2(byte* data) const {
+  memcpy(data, raw + 15, 15);
+}
+
+void heatpumpFunctions::clear() {
+  memset(raw, 0, sizeof(raw));
+  _isValid1 = false;
+  _isValid2 = false;
+}
+
+int heatpumpFunctions::getCode(byte b) {
+  return ((b >> 2) & 0xff) + 100;
+}
+
+int heatpumpFunctions::getValue(byte b) {
+  return b & 3;
+}
+    
+int heatpumpFunctions::getValue(int code) {
+  if (code > 128 || code < 101)
+    return 0;
+    
+  for (int i = 0; i < MAX_FUNCTION_CODE_COUNT; ++i) {
+    if (getCode(raw[i]) == code)
+      return getValue(raw[i]);
+  }
+
+  return 0;
+}
+
+bool heatpumpFunctions::setValue(int code, int value) {
+  if (code > 128 || code < 101)
+    return false;
+
+  if (value < 1 || value > 3)
+    return false;
+    
+  for (int i = 0; i < MAX_FUNCTION_CODE_COUNT; ++i) {
+    if (getCode(raw[i]) == code) {
+      raw[i] = ((code - 100) << 2) + value;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+heatpumpFunctionCodes heatpumpFunctions::getAllCodes() {
+  heatpumpFunctionCodes result;
+  for (int i = 0; i < MAX_FUNCTION_CODE_COUNT; ++i) {
+    int code = getCode(raw[i]);
+    result.code[i] = code;
+    result.valid[i] = (code >= 101 && code <= 128);
+  }
+
+  return result;
+}
+
+bool heatpumpFunctions::operator==(const heatpumpFunctions& rhs) {
+  return this->isValid() == rhs.isValid() && memcmp(this->raw, rhs.raw, MAX_FUNCTION_CODE_COUNT * sizeof(int)) == 0;
+}
+
+bool heatpumpFunctions::operator!=(const heatpumpFunctions& rhs) {
+  return !(*this==rhs);
+}

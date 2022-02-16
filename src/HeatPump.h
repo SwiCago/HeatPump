@@ -1,17 +1,14 @@
 /*
   HeatPump.h - Mitsubishi Heat Pump control library for Arduino
   Copyright (c) 2017 Al Betschart.  All right reserved.
-
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
   version 2.1 of the License, or (at your option) any later version.
-
   This library is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   Lesser General Public License for more details.
-
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
@@ -80,6 +77,45 @@ struct heatpumpStatus {
   int compressorFrequency;
 };
 
+#define MAX_FUNCTION_CODE_COUNT 30
+
+struct heatpumpFunctionCodes {
+  bool valid[MAX_FUNCTION_CODE_COUNT];
+  int code[MAX_FUNCTION_CODE_COUNT];
+};
+
+class heatpumpFunctions  {
+  private:
+    byte raw[MAX_FUNCTION_CODE_COUNT];
+    bool _isValid1;
+    bool _isValid2;
+
+    int getCode(byte b);
+    int getValue(byte b);
+
+  public:
+    heatpumpFunctions();
+
+    bool isValid() const;
+    
+    // data must be 15 bytes
+    void setData1(byte* data);
+    void setData2(byte* data);
+    void getData1(byte* data) const;
+    void getData2(byte* data) const;
+    
+    void clear();
+
+    int getValue(int code);
+    bool setValue(int code, int value);
+
+    heatpumpFunctionCodes getAllCodes();   
+
+    bool operator==(const heatpumpFunctions& rhs);
+    bool operator!=(const heatpumpFunctions& rhs);
+
+};
+
 class HeatPump
 {
   private:
@@ -114,6 +150,7 @@ class HeatPump
     const int RCVD_PKT_UPDATE_SUCCESS  = 4;
     const int RCVD_PKT_STATUS          = 5;
     const int RCVD_PKT_TIMER           = 6;
+    const int RCVD_PKT_FUNCTIONS       = 7;
 
     const byte CONTROL_PACKET_1[5] = {0x01,    0x02,  0x04,  0x08, 0x10};
                                    //{"POWER","MODE","TEMP","FAN","VANE"};
@@ -146,6 +183,8 @@ class HeatPump
 
     // initialise to all off, then it will update shortly after connect;
     heatpumpStatus currentStatus {0, false, {TIMER_MODE_MAP[0], 0, 0, 0, 0}, 0};
+
+    heatpumpFunctions functions;
   
     HardwareSerial * _HardSerial {nullptr};
     unsigned long lastSend;
@@ -190,7 +229,8 @@ class HeatPump
     // general
     HeatPump();
     bool connect(HardwareSerial *serial);
-    bool connect(HardwareSerial *serial, int bitrate);
+    bool connect(HardwareSerial *serial, int rx, int tx);
+    bool connect(HardwareSerial *serial, int bitrate, int rx, int tx);
     bool update();
     void sync(byte packetType = PACKET_TYPE_DEFAULT);
     void enableExternalUpdate();
@@ -224,6 +264,10 @@ class HeatPump
     bool getOperating();
     bool isConnected();
 
+    // functions
+    heatpumpFunctions getFunctions();
+    bool setFunctions(heatpumpFunctions const& functions);
+    
     // helpers
     float FahrenheitToCelsius(int tempF);
     int CelsiusToFahrenheit(float tempC);
