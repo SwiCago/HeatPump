@@ -103,7 +103,11 @@ bool HeatPump::connect(HardwareSerial *serial, int bitrate, int rx, int tx) {
   }
   connected = false;
   if (rx >= 0 && tx >= 0) {
+#if defined(ESP32)    
     _HardSerial->begin(bitrate, SERIAL_8E1, rx, tx);
+#else
+    _HardSerial->begin(bitrate, SERIAL_8E1);
+#endif    
   } else {
     _HardSerial->begin(bitrate, SERIAL_8E1);
   }
@@ -256,12 +260,9 @@ void HeatPump::setTemperature(float setting) {
 
 void HeatPump::setRemoteTemperature(float setting) {
   byte packet[PACKET_LEN] = {};
-  for (int i = 0; i < 21; i++) {
-    packet[i] = 0x00;
-  } 
-  for (int i = 0; i < HEADER_LEN; i++) {
-    packet[i] = HEADER[i];
-  }
+  
+  prepareSetPacket(packet, PACKET_LEN);
+  
   packet[5] = 0x07;
   if(setting > 0) {
     packet[6] = 0x01;
@@ -447,13 +448,8 @@ byte HeatPump::checkSum(byte bytes[], int len) {
 }
 
 void HeatPump::createPacket(byte *packet, heatpumpSettings settings) {
-  //preset all bytes to 0x00
-  for (int i = 0; i < 21; i++) {
-    packet[i] = 0x00;
-  }
-  for (int i = 0; i < HEADER_LEN; i++) {
-    packet[i] = HEADER[i];
-  }
+  prepareSetPacket(packet, PACKET_LEN);
+  
   if(settings.power != currentSettings.power) {
     packet[8]  = POWER[lookupByteMapIndex(POWER_MAP, 2, settings.power)];
     packet[6] += CONTROL_PACKET_1[0];
@@ -736,11 +732,35 @@ int HeatPump::readPacket() {
   return RCVD_PKT_FAIL;
 }
 
+void HeatPump::prepareInfoPacket(byte* packet, int length) {
+  memset(packet, 0, length * sizeof(byte));
+  
+  for (int i = 0; i < INFOHEADER_LEN && i < length; i++) {
+    packet[i] = INFOHEADER[i];
+  }  
+}
+
+void HeatPump::prepareSetPacket(byte* packet, int length) {
+  memset(packet, 0, length * sizeof(byte));
+  
+  for (int i = 0; i < HEADER_LEN && i < length; i++) {
+    packet[i] = HEADER[i];
+  }  
+}
+
 heatpumpFunctions HeatPump::getFunctions() {
   functions.clear();
   
-  byte packet1[PACKET_LEN] = {0xFC, 0x42, 0x01, 0x30, 0x10, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5D};
-  byte packet2[PACKET_LEN] = {0xFC, 0x42, 0x01, 0x30, 0x10, 0x22, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5B};
+  byte packet1[PACKET_LEN] = {};
+  byte packet2[PACKET_LEN] = {};
+
+  prepareInfoPacket(packet1, PACKET_LEN);
+  packet1[5] = FUNCTIONS_GET_PART1;
+  packet1[21] = checkSum(packet1, 21);
+
+  prepareInfoPacket(packet2, PACKET_LEN);
+  packet2[5] = FUNCTIONS_GET_PART2;
+  packet2[21] = checkSum(packet2, 21);
   
   while(!canSend(false)) { delay(10); }
   writePacket(packet1, PACKET_LEN);
@@ -765,15 +785,30 @@ bool HeatPump::setFunctions(heatpumpFunctions const& functions) {
     return false;
   }
 
-  byte packet1[PACKET_LEN] = {0xFC, 0x41, 0x01, 0x30, 0x10, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  byte packet2[PACKET_LEN] = {0xFC, 0x41, 0x01, 0x30, 0x10, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  byte packet1[PACKET_LEN] = {};
+  byte packet2[PACKET_LEN] = {};
+
+  prepareSetPacket(packet1, PACKET_LEN);
+  packet1[5] = FUNCTIONS_SET_PART1;
+  
+  prepareSetPacket(packet2, PACKET_LEN);
+  packet2[5] = FUNCTIONS_SET_PART2;
+  
   functions.getData1(&packet1[6]);
   functions.getData2(&packet2[6]);
 
-  byte chkSum1 = checkSum(packet1, 21);
-  packet1[21] = chkSum1;
-  byte chkSum2 = checkSum(packet2, 21);
-  packet2[21] = chkSum2;
+  // sanity check, we expect data byte 15 (index 20) to be 0
+  if (packet1[20] != 0 || packet2[20] != 0)
+    return false;
+    
+  // make sure all the other data bytes are set
+  for (int i = 6; i < 20; ++i) {
+    if (packet1[i] == 0 || packet2[i] == 0)
+      return false;
+  }
+
+  packet1[21] = checkSum(packet1, 21);
+  packet2[21] = checkSum(packet2, 21);
 
   while(!canSend(false)) { delay(10); }
   writePacket(packet1, PACKET_LEN);

@@ -113,7 +113,6 @@ class heatpumpFunctions  {
 
     bool operator==(const heatpumpFunctions& rhs);
     bool operator!=(const heatpumpFunctions& rhs);
-
 };
 
 class HeatPump
@@ -177,6 +176,11 @@ class HeatPump
 
     static const int TIMER_INCREMENT_MINUTES = 10;
 
+    const byte FUNCTIONS_SET_PART1 = 0x1F;
+    const byte FUNCTIONS_GET_PART1 = 0x20;
+    const byte FUNCTIONS_SET_PART2 = 0x21;
+    const byte FUNCTIONS_GET_PART2 = 0x22;
+
     // these settings will be initialised in connect()
     heatpumpSettings currentSettings {};
     heatpumpSettings wantedSettings {};
@@ -210,6 +214,8 @@ class HeatPump
     void createInfoPacket(byte *packet, byte packetType);
     int readPacket();
     void writePacket(byte *packet, int length);
+    void prepareInfoPacket(byte* packet, int length);
+    void prepareSetPacket(byte* packet, int length);
 
     // callbacks
     ON_CONNECT_CALLBACK_SIGNATURE {nullptr};
@@ -265,6 +271,7 @@ class HeatPump
     bool isConnected();
 
     // functions
+    // NOTE: These methods have been tested with a PVA (P-series air handler) unit and has not been tested with anything else. Use at your own risk.
     heatpumpFunctions getFunctions();
     bool setFunctions(heatpumpFunctions const& functions);
     
