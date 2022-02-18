@@ -53,6 +53,35 @@ By default the library ignores changes made from other sources (usually, the IR 
 
 If you want to also allow manual control and allow the library to update its settings from the current state of the heat pump you need to call `enableExternalUpdate()`. This will also enable automatic updates.
 
+### Support for installer settings/functions
+Important: This is only tested on PVA (P-Series air handler) units and is not known to work on any other models. 
+
+You can refer to page 6 of this document to see the generic list of functions: https://www.mitsubishitechinfo.ca/sites/default/files/Installation_Manual_69-2426-01_0.pdf. Note that what each setting does is model specific. For example, this document lists the available codes and values for PVAs: https://www.mitsubishitechinfo.ca/sites/default/files/IM_PVA_A12_42AA7_PA79D213H09.pdf, page 22.
+
+```c++
+heatpumpFunctions functions = hp.getFunctions();
+
+heatpumpFunctionCodes codes = functions.getAllCodes();
+for (int i = 0; i < MAX_FUNCTION_CODE_COUNT; ++i) {
+  if (codes.valid[i]) {
+    int code = codes.code[i];
+    int value = functions.getValue(code);
+    // handle value
+  }
+}
+
+
+if (!functions.setValue(code, value)) {
+  // handle error
+}
+
+if (!hp.setFunctions(functions)) {
+  // handle error
+}
+```
+
+It is recommended to call `getFunctions()` every time when you need to make a change to the values in order to get a fresh `heatpumpFunctions`. Otherwise you might accidentally write out stale values and overwrite changes that might have happened through other sources.
+
 ### Callbacks
 
 Instead of manually checking settings changes on each loop, you can set callback functions to be called when the current heat pump status or settings change:
