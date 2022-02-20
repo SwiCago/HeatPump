@@ -235,6 +235,7 @@ class HeatPump
     // general
     HeatPump();
     bool connect(HardwareSerial *serial);
+    bool connect(HardwareSerial *serial, int bitrate);
     bool connect(HardwareSerial *serial, int rx, int tx);
     bool connect(HardwareSerial *serial, int bitrate, int rx, int tx);
     bool update();
