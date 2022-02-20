@@ -88,6 +88,10 @@ bool HeatPump::connect(HardwareSerial *serial) {
   return connect(serial, -1, -1);
 }
 
+bool HeatPump::connect(HardwareSerial *serial, int bitrate) {
+	return connect(serial, bitrate, -1, -1);
+}
+
 bool HeatPump::connect(HardwareSerial *serial, int rx, int tx) {
 	return connect(serial, 0, rx, tx);
 }
