@@ -151,6 +151,7 @@ You can see this in use in the [MQTT example](examples/mitsubishi_heatpump_mqtt_
 
 - Premade pigtails
     - https://nl.aliexpress.com/item/1005003232354177.html select 5P option
+    - https://www.adafruit.com/product/5089 comes with a male and female cable, so if your HVAC does not have the male end soldered in, you could solder their cable in.
 - ESP-01 module (4pk)
     - <https://www.amazon.com/gp/product/B01EA3UJJ4/>
 - Cheap 5V to 3.3V regulator (10pk), for those that don't want to make one
