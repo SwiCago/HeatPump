@@ -158,6 +158,9 @@ bool HeatPump::update() {
 		    delay(10);
 	    }
 	    sync(RQST_PKT_SETTINGS);
+    } else {
+      // No auto update, but the next time we sync, fetch the updated settings first
+      infoMode = 0;
     }
 
     return true;
