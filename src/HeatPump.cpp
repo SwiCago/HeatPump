@@ -139,6 +139,11 @@ bool HeatPump::connect(HardwareSerial *serial, int bitrate, int rx, int tx) {
 bool HeatPump::update() {
   while(!canSend(false)) { delay(10); }
 
+  // Flush the serial buffer before updating settings to clear out
+  // any remaining responses that would prevent us from receiving
+  // RCVD_PKT_UPDATE_SUCCESS
+  readAllPackets();
+
   byte packet[PACKET_LEN] = {};
   createPacket(packet, wantedSettings);
   writePacket(packet, PACKET_LEN);
@@ -166,7 +171,7 @@ void HeatPump::sync(byte packetType) {
     connect(NULL);
   }
   else if(canRead()) {
-    readPacket();
+    readAllPackets();
   }
   else if(autoUpdate && !firstRun && wantedSettings != currentSettings && packetType == PACKET_TYPE_DEFAULT) {
     update();
@@ -734,6 +739,12 @@ int HeatPump::readPacket() {
   }
 
   return RCVD_PKT_FAIL;
+}
+
+void HeatPump::readAllPackets() {
+  while (_HardSerial->available() > 0) {
+    readPacket();
+  }
 }
 
 void HeatPump::prepareInfoPacket(byte* packet, int length) {
