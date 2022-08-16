@@ -213,6 +213,7 @@ class HeatPump
     void createPacket(byte *packet, heatpumpSettings settings);
     void createInfoPacket(byte *packet, byte packetType);
     int readPacket();
+    void readAllPackets();
     void writePacket(byte *packet, int length);
     void prepareInfoPacket(byte* packet, int length);
     void prepareSetPacket(byte* packet, int length);
