@@ -75,6 +75,8 @@ struct heatpumpStatus {
   bool operating; // if true, the heatpump is operating to reach the desired temperature
   heatpumpTimers timers;
   int compressorFrequency;
+  int stage; // Heating or cooling stage: 1 is lowest power 5 is highest output
+  int loopStatus; // 0x04 is preheating. 0x08 is standby or waiting, In a multi head system if others are already heating and one wants to cool it goes to this mode.
 };
 
 #define MAX_FUNCTION_CODE_COUNT 30
@@ -150,6 +152,7 @@ class HeatPump
     const int RCVD_PKT_STATUS          = 5;
     const int RCVD_PKT_TIMER           = 6;
     const int RCVD_PKT_FUNCTIONS       = 7;
+    const int RCVD_PKT_STANDBY         = 8;
 
     const byte CONTROL_PACKET_1[5] = {0x01,    0x02,  0x04,  0x08, 0x10};
                                    //{"POWER","MODE","TEMP","FAN","VANE"};

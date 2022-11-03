@@ -712,7 +712,20 @@ int HeatPump::readPacket() {
             }
 
             case 0x09: { // standby mode maybe?
-              break;
+              heatpumpStatus receivedStatus;
+              receivedStatus.loopStatus = data[3];
+              receivedStatus.stage = data[4];
+
+              // callback for status change
+              if(statusChangedCallback && currentStatus.loopStatus != receivedStatus.loopStatus || currentStatus.stage != receivedStatus.stage) {
+                currentStatus.loopStatus = receivedStatus.loopStatus;
+                currentStatus.stage = receivedStatus.stage
+                statusChangedCallback(currentStatus);
+              } else {
+                currentStatus.loopStatus = receivedStatus.loopStatus;
+                currentStatus.stage = receivedStatus.stage
+              }
+              return RCVD_PKT_STANDBY;
             }
             
             case 0x20:
