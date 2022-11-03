@@ -719,11 +719,11 @@ int HeatPump::readPacket() {
               // callback for status change
               if(statusChangedCallback && currentStatus.loopStatus != receivedStatus.loopStatus || currentStatus.stage != receivedStatus.stage) {
                 currentStatus.loopStatus = receivedStatus.loopStatus;
-                currentStatus.stage = receivedStatus.stage
+                currentStatus.stage = receivedStatus.stage;
                 statusChangedCallback(currentStatus);
               } else {
                 currentStatus.loopStatus = receivedStatus.loopStatus;
-                currentStatus.stage = receivedStatus.stage
+                currentStatus.stage = receivedStatus.stage;
               }
               return RCVD_PKT_STANDBY;
             }
