@@ -122,7 +122,7 @@ class HeatPump
     static const int PACKET_SENT_INTERVAL_MS = 1000;
     static const int PACKET_INFO_INTERVAL_MS = 2000;
     static const int PACKET_TYPE_DEFAULT = 99;
-	static const int AUTOUPDATE_GRACE_PERIOD_IGNORE_EXTERNAL_UPDATES_MS = 30000;
+    static const int AUTOUPDATE_GRACE_PERIOD_IGNORE_EXTERNAL_UPDATES_MS = 30000;
 
     static const int CONNECT_LEN = 8;
     const byte CONNECT[CONNECT_LEN] = {0xfc, 0x5a, 0x01, 0x30, 0x02, 0xca, 0x01, 0xa8};
@@ -185,8 +185,8 @@ class HeatPump
     // these settings will be initialised in connect()
     heatpumpSettings currentSettings {};
     heatpumpSettings wantedSettings {};
-	// Hacks
-	unsigned long lastWanted;
+    // Hacks
+    unsigned long lastWanted;
 
     // initialise to all off, then it will update shortly after connect;
     heatpumpStatus currentStatus {0, false, {TIMER_MODE_MAP[0], 0, 0, 0, 0}, 0};
