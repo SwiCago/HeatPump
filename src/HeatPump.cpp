@@ -641,7 +641,7 @@ int HeatPump::readPacket() {
               }
 
               // if this is the first time we have synced with the heatpump, set wantedSettings to receivedSettings
-			  // hack: add grace period of a few seconds before respecting external changes
+              // hack: add grace period of a few seconds before respecting external changes
               if(firstRun || (autoUpdate && externalUpdate && millis() - lastWanted > AUTOUPDATE_GRACE_PERIOD_IGNORE_EXTERNAL_UPDATES_MS)) {
                 wantedSettings = currentSettings;
                 firstRun = false;
