@@ -1,4 +1,4 @@
-Support Chat here -> [![Join the chat at https://gitter.im/Mitsubishi-Heat-Pump](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mitsubishi-Heat-Pump?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)  <-Support Chat here
+Support Chat here -> [![Join the chat at https://gitter.im/Mitsubishi-Heat-Pump](https://badges.gitter.im/Join%20Chat.svg)](https://app.gitter.im/#/room/#Mitsubishi-Heat-Pump_Lobby:gitter.im)  <-Support Chat here
 
 # HeatPump
 
