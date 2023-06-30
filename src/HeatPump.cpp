@@ -70,6 +70,7 @@ bool operator!=(const heatpumpTimers& lhs, const heatpumpTimers& rhs) {
 // Constructor /////////////////////////////////////////////////////////////////
 
 HeatPump::HeatPump() {
+  lastWanted = millis();
   lastSend = 0;
   infoMode = 0;
   lastRecv = millis() - (PACKET_SENT_INTERVAL_MS * 10);
@@ -226,6 +227,7 @@ bool HeatPump::getPowerSettingBool() {
 
 void HeatPump::setPowerSetting(bool setting) {
   wantedSettings.power = lookupByteMapIndex(POWER_MAP, 2, POWER_MAP[setting ? 1 : 0]) > -1 ? POWER_MAP[setting ? 1 : 0] : POWER_MAP[0];
+  lastWanted = millis();
 }
 
 const char* HeatPump::getPowerSetting() {
@@ -239,6 +241,7 @@ void HeatPump::setPowerSetting(const char* setting) {
   } else {
     wantedSettings.power = POWER_MAP[0];
   }
+  lastWanted = millis();
 }
 
 const char* HeatPump::getModeSetting() {
@@ -252,6 +255,7 @@ void HeatPump::setModeSetting(const char* setting) {
   } else {
     wantedSettings.mode = MODE_MAP[0];
   }
+  lastWanted = millis();
 }
 
 float HeatPump::getTemperature() {
@@ -268,6 +272,7 @@ void HeatPump::setTemperature(float setting) {
     setting = setting / 2;
     wantedSettings.temperature = setting < 10 ? 10 : (setting > 31 ? 31 : setting);
   }
+  lastWanted = millis();
 }
 
 void HeatPump::setRemoteTemperature(float setting) {
@@ -309,6 +314,7 @@ void HeatPump::setFanSpeed(const char* setting) {
   } else {
     wantedSettings.fan = FAN_MAP[0];
   }
+  lastWanted = millis();
 }
 
 const char* HeatPump::getVaneSetting() {
@@ -322,6 +328,7 @@ void HeatPump::setVaneSetting(const char* setting) {
   } else {
     wantedSettings.vane = VANE_MAP[0];
   }
+  lastWanted = millis();
 }
 
 const char* HeatPump::getWideVaneSetting() {
@@ -335,6 +342,7 @@ void HeatPump::setWideVaneSetting(const char* setting) {
   } else {
     wantedSettings.wideVane = WIDEVANE_MAP[0];
   }
+  lastWanted = millis();
 }
 
 bool HeatPump::getIseeBool() { //no setter yet
@@ -633,7 +641,8 @@ int HeatPump::readPacket() {
               }
 
               // if this is the first time we have synced with the heatpump, set wantedSettings to receivedSettings
-              if(firstRun || (autoUpdate && externalUpdate)) {
+              // hack: add grace period of a few seconds before respecting external changes
+              if(firstRun || (autoUpdate && externalUpdate && millis() - lastWanted > AUTOUPDATE_GRACE_PERIOD_IGNORE_EXTERNAL_UPDATES_MS)) {
                 wantedSettings = currentSettings;
                 firstRun = false;
               }
