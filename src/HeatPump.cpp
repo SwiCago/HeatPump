@@ -106,15 +106,20 @@ bool HeatPump::connect(HardwareSerial *serial, int bitrate, int rx, int tx) {
     bitrate = 2400;
     retry = true;
   }
-  connected = false;
   if (rx >= 0 && tx >= 0) {
-#if defined(ESP32)    
+#if defined(ESP32)
+    rxPin = rx;
+    txPin = tx;        
     _HardSerial->begin(bitrate, SERIAL_8E1, rx, tx);
 #else
     _HardSerial->begin(bitrate, SERIAL_8E1);
 #endif    
   } else {
+#if defined(ESP32)      
+    _HardSerial->begin(bitrate, SERIAL_8E1, rxPin, txPin);
+#else
     _HardSerial->begin(bitrate, SERIAL_8E1);
+#endif
   }
   if(onConnectCallback) {
     onConnectCallback();
@@ -133,7 +138,8 @@ bool HeatPump::connect(HardwareSerial *serial, int bitrate, int rx, int tx) {
   if(packetType != RCVD_PKT_CONNECT_SUCCESS && retry){
 	  return connect(serial, 9600, rx, tx);
   }
-  return packetType == RCVD_PKT_CONNECT_SUCCESS;
+  connected = (packetType == RCVD_PKT_CONNECT_SUCCESS);
+  return connected;
   //}
 }
 

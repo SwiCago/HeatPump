@@ -194,6 +194,8 @@ class HeatPump
     heatpumpFunctions functions;
   
     HardwareSerial * _HardSerial {nullptr};
+    int rxPin; // save rx pin for retry ESP32
+    int txPin; // save tx pin for retry ESP32
     unsigned long lastSend;
     bool waitForRead;
     int infoMode;
