@@ -106,22 +106,31 @@ bool HeatPump::connect(HardwareSerial *serial, int bitrate, int rx, int tx) {
     bitrate = 2400;
     retry = true;
   }
-  connected = false;
   if (rx >= 0 && tx >= 0) {
-#if defined(ESP32)    
+#if defined(ESP32)
+    rxPin = rx;
+    txPin = tx;
     _HardSerial->begin(bitrate, SERIAL_8E1, rx, tx);
 #else
     _HardSerial->begin(bitrate, SERIAL_8E1);
-#endif    
+#endif
   } else {
+#if defined(ESP32)
+    _HardSerial->begin(bitrate, SERIAL_8E1, rxPin, txPin);
+#else
     _HardSerial->begin(bitrate, SERIAL_8E1);
+#endif
   }
   if(onConnectCallback) {
     onConnectCallback();
   }
   
-  // settle before we start sending packets
+// settle before we start sending packets
+#if defined(ESP32)
+  delay(1000);
+#else
   delay(2000);
+#endif
 
   // send the CONNECT packet twice - need to copy the CONNECT packet locally
   byte packet[CONNECT_LEN];
@@ -131,9 +140,10 @@ bool HeatPump::connect(HardwareSerial *serial, int bitrate, int rx, int tx) {
   while(!canRead()) { delay(10); }
   int packetType = readPacket();
   if(packetType != RCVD_PKT_CONNECT_SUCCESS && retry){
-	  return connect(serial, 9600, rx, tx);
+	  return connect(serial, 9600, rxPin, txPin);
   }
-  return packetType == RCVD_PKT_CONNECT_SUCCESS;
+  connected = (packetType == RCVD_PKT_CONNECT_SUCCESS);
+  return connected;
   //}
 }
 
@@ -631,7 +641,7 @@ int HeatPump::readPacket() {
               receivedSettings.fan         = lookupByteMapValue(FAN_MAP, FAN, 6, data[6]);
               receivedSettings.vane        = lookupByteMapValue(VANE_MAP, VANE, 7, data[7]);
               receivedSettings.wideVane    = lookupByteMapValue(WIDEVANE_MAP, WIDEVANE, 7, data[10] & 0x0F);
-		    wideVaneAdj = (data[10] & 0xF0) == 0x80 ? true : false;
+		      wideVaneAdj = (data[10] & 0xF0) == 0x80 ? true : false;
               
               if(settingsChangedCallback && receivedSettings != currentSettings) {
                 currentSettings = receivedSettings;
