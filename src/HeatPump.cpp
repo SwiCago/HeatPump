@@ -70,6 +70,8 @@ bool operator!=(const heatpumpTimers& lhs, const heatpumpTimers& rhs) {
 // Constructor /////////////////////////////////////////////////////////////////
 
 HeatPump::HeatPump() {
+  rxPin = 0;
+  txPin = 0;
   lastWanted = millis();
   lastSend = 0;
   infoMode = 0;
@@ -116,7 +118,14 @@ bool HeatPump::connect(HardwareSerial *serial, int bitrate, int rx, int tx) {
 #endif
   } else {
 #if defined(ESP32)
-    _HardSerial->begin(bitrate, SERIAL_8E1, rxPin, txPin);
+    if (rxPin > 0 && rxPin > 0) // check if custom pin previous set
+    {
+      _HardSerial->begin(bitrate, SERIAL_8E1, rxPin, txPin);
+    }
+    else // fall back to default hardware pins
+    {
+      _HardSerial->begin(bitrate, SERIAL_8E1);
+    }
 #else
     _HardSerial->begin(bitrate, SERIAL_8E1);
 #endif
@@ -139,8 +148,16 @@ bool HeatPump::connect(HardwareSerial *serial, int bitrate, int rx, int tx) {
   writePacket(packet, CONNECT_LEN);
   while(!canRead()) { delay(10); }
   int packetType = readPacket();
-  if(packetType != RCVD_PKT_CONNECT_SUCCESS && retry){
-	  return connect(serial, 9600, rxPin, txPin);
+  if (packetType != RCVD_PKT_CONNECT_SUCCESS && retry)
+  {
+    if (rxPin > 0 && rxPin > 0) // check if custom pin previous set
+    {
+      return connect(serial, 9600, rxPin, txPin);
+    }
+    else
+    {
+      return connect(serial, 9600, rx, tx);
+    }
   }
   connected = (packetType == RCVD_PKT_CONNECT_SUCCESS);
   return connected;
