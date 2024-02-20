@@ -235,18 +235,15 @@ heatpumpSettings HeatPump::getSettings() {
   return currentSettings;
 }
 
-heatpumpSettings HeatPump::getWantedSettings()
-{
+heatpumpSettings HeatPump::getWantedSettings() {
   return wantedSettings;
 }
 
-unsigned long HeatPump::getLastWanted()
-{
+unsigned long HeatPump::getLastWanted() {
   return lastWanted;
 }
 
-void HeatPump::setFastSync(bool setting)
-{
+void HeatPump::setFastSync(bool setting) {
   fastSync = setting;
 }
 
@@ -558,12 +555,10 @@ void HeatPump::createInfoPacket(byte *packet, byte packetType) {
   } else {
     // request current infoMode, and increment for the next request
     packet[5] = INFOMODE[infoMode];
-    if (infoMode == (fastSync ? 2 : (INFOMODE_LEN - 1)))
-    { // if enable fastSync we only request RQST_PKT_SETTINGS, RQST_PKT_ROOM_TEMP and RQST_PKT_STATUS, so the sync will be 2x faster
+    // if enable fastSync we only request RQST_PKT_SETTINGS, RQST_PKT_ROOM_TEMP and RQST_PKT_STATUS, so the sync will be 2x faster
+    if (infoMode == (fastSync ? 2 : (INFOMODE_LEN - 1))) {
       infoMode = 0;
-    }
-    else
-    {
+    } else {
       infoMode++;
     }
   }
