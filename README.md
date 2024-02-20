@@ -25,6 +25,7 @@ hp.setSettings(settings);
 // OR individual settings
 // hp.setModeSetting("COOL");
 
+// hp.setFastSync(true); // enable fast sync mode, we only request RQST_PKT_SETTINGS, RQST_PKT_ROOM_TEMP and RQST_PKT_STATUS
 hp.update();
 ```
 
