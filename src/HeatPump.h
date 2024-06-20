@@ -72,6 +72,7 @@ bool operator!=(const heatpumpTimers& lhs, const heatpumpTimers& rhs);
 
 struct heatpumpStatus {
   float roomTemperature;
+  float outdoorTemperature;
   bool operating; // if true, the heatpump is operating to reach the desired temperature
   heatpumpTimers timers;
   int compressorFrequency;
@@ -189,7 +190,7 @@ class HeatPump
     unsigned long lastWanted;
 
     // initialise to all off, then it will update shortly after connect;
-    heatpumpStatus currentStatus {0, false, {TIMER_MODE_MAP[0], 0, 0, 0, 0}, 0};
+    heatpumpStatus currentStatus {0, 0, false, {TIMER_MODE_MAP[0], 0, 0, 0, 0}, 0};
 
     heatpumpFunctions functions;
   
@@ -274,6 +275,7 @@ class HeatPump
     // status
     heatpumpStatus getStatus();
     float getRoomTemperature();
+    float getOutdoorTemperature();
     bool getOperating();
     bool isConnected();
 

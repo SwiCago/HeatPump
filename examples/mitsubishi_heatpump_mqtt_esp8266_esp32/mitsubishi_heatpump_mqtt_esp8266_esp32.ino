@@ -98,8 +98,9 @@ void hpStatusChanged(heatpumpStatus currentStatus) {
   const size_t bufferSizeInfo = JSON_OBJECT_SIZE(2);
   DynamicJsonDocument rootInfo(bufferSizeInfo);
 
-  rootInfo["roomTemperature"] = currentStatus.roomTemperature;
-  rootInfo["operating"]       = currentStatus.operating;
+  rootInfo["roomTemperature"]    = currentStatus.roomTemperature;
+  rootInfo["outdoorTemperature"] = currentStatus.outdoorTemperature;
+  rootInfo["operating"]          = currentStatus.operating;
 
   char bufferInfo[512];
   serializeJson(rootInfo, bufferInfo);

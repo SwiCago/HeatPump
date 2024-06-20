@@ -36,6 +36,7 @@ getIseeBool	KEYWORD2
 
 getStatus	KEYWORD2
 getRoomTemperature	KEYWORD2
+getOutdoorTemperature	KEYWORD2
 getOperating	KEYWORD2
 
 FahrenheitToCelsius	KEYWORD2

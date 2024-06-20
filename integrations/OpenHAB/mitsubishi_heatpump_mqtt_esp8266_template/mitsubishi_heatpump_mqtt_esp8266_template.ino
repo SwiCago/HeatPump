@@ -84,8 +84,9 @@ void hpStatusChanged(heatpumpStatus currentStatus) {
   DynamicJsonBuffer jsonBufferInfo(bufferSizeInfo);
   
   JsonObject& rootInfo = jsonBufferInfo.createObject();
-  rootInfo["roomTemperature"] = (isCelsius) ? hp.getRoomTemperature() : hp.CelsiusToFahrenheit(hp.getRoomTemperature());
-  rootInfo["operating"]       = currentStatus.operating;
+  rootInfo["roomTemperature"]    = (isCelsius) ? hp.getRoomTemperature() : hp.CelsiusToFahrenheit(hp.getRoomTemperature());
+  rootInfo["outdoorTemperature"] = (isCelsius) ? hp.getOutdoorTemperature() : hp.CelsiusToFahrenheit(hp.getOutdoorTemperature());
+  rootInfo["operating"]          = currentStatus.operating;
   
   char bufferInfo[512];
   rootInfo.printTo(bufferInfo, sizeof(bufferInfo));

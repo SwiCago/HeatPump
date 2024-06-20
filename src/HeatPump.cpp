@@ -384,6 +384,10 @@ float HeatPump::getRoomTemperature() {
   return currentStatus.roomTemperature;
 }
 
+float HeatPump::getOutdoorTemperature() {
+  return currentStatus.outdoorTemperature;
+}
+
 bool HeatPump::getOperating() {
   return currentStatus.operating;
 }
@@ -680,6 +684,14 @@ int HeatPump::readPacket() {
             case 0x03: { //Room temperature reading
               heatpumpStatus receivedStatus;
 
+              if(data[5] != 0x00) {
+                int temp = data[5];
+                temp -= 128;
+                receivedStatus.outdoorTemperature = (float)temp / 2;
+              } else {
+                receivedStatus.outdoorTemperature = 0;
+              }
+
               if(data[6] != 0x00) {
                 int temp = data[6];
                 temp -= 128;
@@ -700,6 +712,16 @@ int HeatPump::readPacket() {
                 }
               } else {
                 currentStatus.roomTemperature = receivedStatus.roomTemperature;
+              }
+
+              if((statusChangedCallback) && currentStatus.outdoorTemperature != receivedStatus.outdoorTemperature) {
+                currentStatus.outdoorTemperature = receivedStatus.outdoorTemperature;
+
+                if(statusChangedCallback) {
+                  statusChangedCallback(currentStatus);
+                }
+              } else {
+                currentStatus.outdoorTemperature = receivedStatus.outdoorTemperature;
               }
 
               return RCVD_PKT_ROOM_TEMP;
