@@ -302,6 +302,10 @@ float HeatPump::getTemperature() {
 }
 
 void HeatPump::setTemperature(float setting) {
+  if ((int)(setting * 2) % 2 != 0) {
+    tempMode = true;
+  }
+
   if(!tempMode){
     wantedSettings.temperature = lookupByteMapIndex(TEMP_MAP, 16, (int)(setting + 0.5)) > -1 ? setting : TEMP_MAP[0];
   }
@@ -518,7 +522,7 @@ void HeatPump::createPacket(byte *packet, heatpumpSettings settings) {
     packet[6] += CONTROL_PACKET_1[1];
   }
   if(!tempMode && settings.temperature!= currentSettings.temperature) {
-    packet[10] = TEMP[lookupByteMapIndex(TEMP_MAP, 16, settings.temperature)];
+    packet[10] = TEMP[lookupByteMapIndex(TEMP_MAP, 16, round(settings.temperature))];
     packet[6] += CONTROL_PACKET_1[2];
   }
   else if(tempMode && settings.temperature!= currentSettings.temperature) {
